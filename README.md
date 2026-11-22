@@ -84,7 +84,7 @@ rowseiy-room/
 
 ## Contact
 
-[![Email](https://img.shields.io/badge/Email-your--email@example.com-1f2328?style=flat-square&logo=gmail&logoColor=white)](mailto:rosierosie0909@gmail.com)
+[![Email](https://img.shields.io/badge/rosierosie0909@gmail.com-1f2328?style=flat-square&logo=gmail&logoColor=white)](mailto:rosierosie0909@gmail.com)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-1f2328?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/your-link)
 [![GitHub](https://img.shields.io/badge/GitHub-rowseiyyyy-1f2328?style=flat-square&logo=github&logoColor=white)](https://github.com/rowseiyyyy)
 
