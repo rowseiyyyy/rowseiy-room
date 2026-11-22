@@ -8,6 +8,8 @@ const Animations = (() => {
   let animatedParts = {};
   let lights = {};
   let scene;
+  let root;
+  let revealStartedAt = performance.now();
   let clock = new THREE.Clock();
   let isNight = false;
   let reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -21,10 +23,12 @@ const Animations = (() => {
   let typingStartedAt = 0;
   let clockSpinUntil = 0;
 
-  function init({ animatedParts: parts, lights: sceneLights, scene: scn }) {
+  function init({ animatedParts: parts, lights: sceneLights, scene: scn, root: roomRoot }) {
     animatedParts = parts;
     lights = sceneLights;
     scene = scn;
+    root = roomRoot;
+    revealStartedAt = performance.now();
     scheduleNextCatState(2 + Math.random() * 3);
 
     window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", (e) => {
@@ -110,6 +114,14 @@ const Animations = (() => {
   function updateAmbient(delta) {
     if (reducedMotion) return;
     const t = clock.elapsedTime;
+
+    if (root) {
+      const reveal = THREE.MathUtils.clamp((performance.now() - revealStartedAt) / 1100, 0, 1);
+      const ease = 1 - Math.pow(1 - reveal, 3);
+      root.position.y = (1 - ease) * -0.18;
+      root.rotation.y = (1 - ease) * -0.055;
+      root.scale.setScalar(0.96 + ease * 0.04);
+    }
 
     if (animatedParts.plantLeaves) {
       animatedParts.plantLeaves.rotation.z = Math.sin(t * 0.8) * 0.055;

@@ -31,6 +31,7 @@
     animatedParts,
     lights: RoomScene.lights,
     scene: RoomScene.scene,
+    root,
   });
 
   // ---------- Day/Night persistence ----------

@@ -272,6 +272,10 @@ const Portfolio = (() => {
   });
   overlay.classList.add("open");
   overlay.setAttribute("aria-hidden", "false");
+  content.querySelectorAll(".info-card, .fact-item, .timeline-item").forEach((item, index) => {
+    item.classList.add("stagger-item");
+    item.style.setProperty("--stagger-index", index);
+  });
   document.addEventListener("keydown", onKeydown);
   closeBtn.focus();
 }

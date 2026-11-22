@@ -528,8 +528,12 @@ const Interactions = (() => {
 
     const az = baseAzimuth;
     const el = baseElevation;
+    const idle = !isDragging && !draggedObject && !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? performance.now() / 1000
+      : 0;
+    const breath = idle ? Math.sin(idle * 0.45) * 0.012 : 0;
     camera.position.x = lookAtPoint.x + cameraRadius * Math.cos(el) * Math.sin(az);
-    camera.position.y = lookAtPoint.y + cameraRadius * Math.sin(el);
+    camera.position.y = lookAtPoint.y + cameraRadius * Math.sin(el) + breath;
     camera.position.z = lookAtPoint.z + cameraRadius * Math.cos(el) * Math.cos(az);
     camera.lookAt(lookAtPoint);
   }
