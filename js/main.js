@@ -47,6 +47,7 @@
 
   function applyNightMode(night, animate) {
     Animations.setNightMode(night);
+    document.documentElement.dataset.theme = night ? "night" : "day";
     setIcon(daynightBtn, night ? icons.sun : icons.moon);
     daynightBtn.setAttribute("aria-label", night ? "Switch to day mode" : "Switch to night mode");
   }
