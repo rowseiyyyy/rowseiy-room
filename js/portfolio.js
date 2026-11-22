@@ -9,6 +9,7 @@ const Portfolio = (() => {
   const content = document.getElementById("overlay-content");
   const closeBtn = document.getElementById("overlay-close");
   const backdrop = document.getElementById("overlay-backdrop");
+  const objectNav = document.querySelector(".object-nav");
   let lastFocusedEl = null;
 
   function escapeHtml(str) {
@@ -272,6 +273,7 @@ const Portfolio = (() => {
   });
   overlay.classList.add("open");
   overlay.setAttribute("aria-hidden", "false");
+  objectNav.hidden = true;
   content.querySelectorAll(".info-card, .fact-item, .timeline-item").forEach((item, index) => {
     item.classList.add("stagger-item");
     item.style.setProperty("--stagger-index", index);
@@ -283,6 +285,7 @@ const Portfolio = (() => {
 function close() {
   overlay.classList.remove("open");
   overlay.setAttribute("aria-hidden", "true");
+  objectNav.hidden = false;
   document.removeEventListener("keydown", onKeydown);
   if (lastFocusedEl) lastFocusedEl.focus();
 }

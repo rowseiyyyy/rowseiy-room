@@ -74,7 +74,12 @@
 
   // ---------- Loading screen ----------
   const loadingScreen = document.getElementById("loading-screen");
-  setTimeout(() => loadingScreen.classList.add("hidden"), 400);
+  const loadingScreenDuration = 3500;
+  const loadingFadeDuration = 600;
+  setTimeout(
+    () => loadingScreen.classList.add("hidden"),
+    loadingScreenDuration - loadingFadeDuration
+  );
 
   // ---------- Smooth hover scale/tilt easing for interactive objects ----------
   function easeInteractiveObjects() {

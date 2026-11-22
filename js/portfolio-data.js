@@ -40,7 +40,7 @@ const PORTFOLIO_DATA = {
         "A web-based student feedback analysis system that analyzes student evaluations and classifies feedback into Positive, Neutral, or Negative sentiment.",
       technologies: ["Python", "Machine Learning", "Data Analysis"],
       status: "In Progress",
-      media: { images: ["images/landing-page.png", "images/admin-acc.png"], videos: [images/videos/echosent.mp4] }, // Add project image/video paths here
+      media: { images: ["images/landing-page.png", "images/admin-acc.png"], videos: ["images/videos/echosent.mp4"] }, // Add project image/video paths here
       github: "https://github.com/rowseiyyyy/Student-Sentiment-Analysis-System", // TODO: add GitHub URL
       demo: "https://echosent.duckdns.org", // TODO: add live demo URL
     },
