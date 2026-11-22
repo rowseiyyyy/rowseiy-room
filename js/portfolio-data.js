@@ -30,8 +30,9 @@ const PORTFOLIO_DATA = {
         "A web-based learning platform where students can upload learning modules, generate quizzes, use flashcards, view quiz history, and track study analytics.",
       technologies: ["Python", "FastAPI", "MySQL", "JavaScript"],
       status: "In Progress", // e.g. "In Progress" | "Completed" | "Planned"
-      github: "", // TODO: add GitHub URL
-      demo: "", // TODO: add live demo URL
+      media: { images: ["images/quizify-landingpage.png", "images/quizify-generate_quiz.png"], videos: [] }, // Add project image/video paths here
+      github: "https://github.com/rowseiyyyy/Quizify", // TODO: add GitHub URL
+      demo: "https://quizify-learn.onrender.com", // TODO: add live demo URL
     },
     {
       name: "EchoSent",
@@ -39,8 +40,9 @@ const PORTFOLIO_DATA = {
         "A web-based student feedback analysis system that analyzes student evaluations and classifies feedback into Positive, Neutral, or Negative sentiment.",
       technologies: ["Python", "Machine Learning", "Data Analysis"],
       status: "In Progress",
-      github: "", // TODO: add GitHub URL
-      demo: "", // TODO: add live demo URL
+      media: { images: ["images/landing-page.png", "images/admin-acc.png"], videos: [] }, // Add project image/video paths here
+      github: "https://github.com/rowseiyyyy/Student-Sentiment-Analysis-System", // TODO: add GitHub URL
+      demo: "https://echosent.duckdns.org", // TODO: add live demo URL
     },
   ],
 

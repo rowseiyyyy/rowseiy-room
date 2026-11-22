@@ -24,6 +24,38 @@ const Portfolio = (() => {
     return `<span class="pill-link disabled">${label} (coming soon)</span>`;
   }
 
+  function renderProjectMedia(project, index) {
+    const media = project.media || {};
+    const images = Array.isArray(media.images) ? media.images : [];
+    const videos = Array.isArray(media.videos) ? media.videos : [];
+    const imageSlots = Math.max(2, images.length);
+    const videoSlots = Math.max(1, videos.length);
+
+    const imageItems = Array.from({ length: imageSlots }, (_, i) => {
+      const src = images[i];
+      return src
+        ? `<figure class="project-media-item"><img src="${escapeHtml(src)}" alt="${escapeHtml(project.name)} screenshot ${i + 1}"><figcaption>Screenshot ${i + 1}</figcaption></figure>`
+        : `<div class="project-media-placeholder" role="img" aria-label="Screenshot ${i + 1} placeholder"><span class="media-placeholder-icon">${sectionIcon("image")}</span><strong>Screenshot ${i + 1}</strong><small>Add an image path in portfolio-data.js</small></div>`;
+    }).join("");
+
+    const videoItems = Array.from({ length: videoSlots }, (_, i) => {
+      const src = videos[i];
+      return src
+        ? `<figure class="project-media-item"><video controls preload="metadata" aria-label="${escapeHtml(project.name)} demo video ${i + 1}"><source src="${escapeHtml(src)}"></video><figcaption>Demo video ${i + 1}</figcaption></figure>`
+        : `<div class="project-media-placeholder video-placeholder" role="img" aria-label="Demo video ${i + 1} placeholder"><span class="media-placeholder-icon">${sectionIcon("gamepad")}</span><strong>Demo video</strong><small>Add a video path in portfolio-data.js</small></div>`;
+    }).join("");
+
+    return `
+      <button class="project-media-toggle" type="button" aria-expanded="false" aria-controls="project-media-${index}">
+        View project photos &amp; video
+      </button>
+      <div class="project-media-panel" id="project-media-${index}" hidden>
+        <h4>Project gallery</h4>
+        <div class="project-media-grid">${imageItems}${videoItems}</div>
+      </div>
+    `;
+  }
+
   function sectionIcon(name) {
     const paths = {
       laptop: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M2 21h20l-2-4H4l-2 4Z"/>',
@@ -68,7 +100,7 @@ const Portfolio = (() => {
 
   const renderers = {
     laptop: () => {
-      const cards = PORTFOLIO_DATA.projects.map((p) => `
+      const cards = PORTFOLIO_DATA.projects.map((p, index) => `
         <div class="info-card">
           <span class="status-badge">${escapeHtml(p.status)}</span>
           <h3>${escapeHtml(p.name)}</h3>
@@ -78,6 +110,7 @@ const Portfolio = (() => {
             ${linkOrPlaceholder(p.github, "GitHub")}
             ${linkOrPlaceholder(p.demo, "Live Demo")}
           </div>
+          ${renderProjectMedia(p, index)}
         </div>
       `).join("");
       return `
@@ -228,6 +261,15 @@ const Portfolio = (() => {
   if (!html) return;
   lastFocusedEl = document.activeElement;
   content.innerHTML = html;
+  content.querySelectorAll(".project-media-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const panel = document.getElementById(button.getAttribute("aria-controls"));
+      const isExpanded = button.getAttribute("aria-expanded") === "true";
+      button.setAttribute("aria-expanded", String(!isExpanded));
+      panel.hidden = isExpanded;
+      button.textContent = isExpanded ? "View project photos & video" : "Hide project photos & video";
+    });
+  });
   overlay.classList.add("open");
   overlay.setAttribute("aria-hidden", "false");
   document.addEventListener("keydown", onKeydown);
