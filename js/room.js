@@ -173,6 +173,28 @@ const Room = (() => {
     root.add(moon);
     animatedParts.moon = moon;
 
+    const dustCount = RoomScene.isLowPower ? 18 : 42;
+    const dustGeometry = new THREE.BufferGeometry();
+    const dustPositions = new Float32Array(dustCount * 3);
+    const dustSpeeds = new Float32Array(dustCount);
+    for (let i = 0; i < dustCount; i++) {
+      dustPositions[i * 3] = 0.45 + Math.random() * 2.2;
+      dustPositions[i * 3 + 1] = 0.8 + Math.random() * 2.4;
+      dustPositions[i * 3 + 2] = -2.35 + Math.random() * 2.1;
+      dustSpeeds[i] = 0.025 + Math.random() * 0.055;
+    }
+    dustGeometry.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
+    const dust = new THREE.Points(
+      dustGeometry,
+      new THREE.PointsMaterial({ color: 0xffedc6, size: 0.025, transparent: true, opacity: 0.55, depthWrite: false })
+    );
+    root.add(dust);
+    animatedParts.dustMotes = {
+      points: dust,
+      speeds: dustSpeeds,
+      basePositions: dustPositions.slice(),
+    };
+
     const starGeo = new THREE.BufferGeometry();
     const starCount = 40;
     const positions = new Float32Array(starCount * 3);
@@ -274,6 +296,25 @@ const Room = (() => {
     glow.rotation.x = -0.35;
     group.add(glow);
     animatedParts.laptopScreen = glow;
+    const screenLines = [];
+    for (let i = 0; i < 4; i++) {
+      const line = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.24 - i * 0.035, 0.012),
+        new THREE.MeshBasicMaterial({ color: i === 0 ? 0x9ce8d3 : 0x5d9bb2, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
+      );
+      line.position.set(-0.15, 0.3 - i * 0.055, -0.187);
+      line.rotation.x = -0.35;
+      group.add(line);
+      screenLines.push(line);
+    }
+    const caret = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.008, 0.025),
+      new THREE.MeshBasicMaterial({ color: 0xb9ffe9, transparent: true, side: THREE.DoubleSide })
+    );
+    caret.position.set(-0.035, 0.135, -0.187);
+    caret.rotation.x = -0.35;
+    group.add(caret);
+    animatedParts.laptopTyping = { lines: screenLines, caret };
     // stickers on the lid back
     box(group, 0.08, 0.08, 0.005, COLORS.tan, -0.15, 0.22, -0.235).rotation.x = -0.35;
     box(group, 0.07, 0.07, 0.005, COLORS.white, 0.1, 0.18, -0.235).rotation.x = -0.35;
@@ -299,6 +340,8 @@ const Room = (() => {
         const w = 0.1 + Math.random() * 0.06;
         const h = 0.25 + Math.random() * 0.2;
         const book = box(group, w, h, 0.2, bookColors[(row * 2 + b) % bookColors.length], offset + w / 2, shelfY + h / 2 + 0.03, 0.05);
+        book.userData.reaction = "book";
+        book.userData.mass = 2.2;
         if (b === n - 1 && row === 1) { book.rotation.z = -0.25; book.position.x += 0.04; } // leaning book
         offset += w + 0.03;
       }
@@ -378,6 +421,7 @@ const Room = (() => {
     }
     group.add(leafGroup);
     animatedParts.plantLeaves = leafGroup;
+    animatedParts.plantLeavesBaseRotation = leafGroup.rotation.clone();
     root.add(group);
     interactiveObjects.push(group);
 
@@ -394,6 +438,7 @@ const Room = (() => {
     cyl(hang, 0.12, 0.08, 0.14, COLORS.tan, 0, 0, 0);
     for (let i = 0; i < 6; i++) box(hang, 0.03, 0.3 + (i % 3) * 0.1, 0.01, 0x55663f, Math.cos(i * 1.1) * 0.1, -0.2 - (i % 3) * 0.04, Math.sin(i * 1.1) * 0.1);
     root.add(hang);
+    animatedParts.hangingPlant = hang;
   }
 
   // -------------------------------------------------------------------- bed
@@ -447,6 +492,7 @@ const Room = (() => {
     body.position.y = 0.2;
     body.castShadow = true;
     group.add(body);
+    animatedParts.catBody = body;
 
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 24, 16), catMat);
     head.position.set(0, 0.36, 0.2);
@@ -462,7 +508,13 @@ const Room = (() => {
     });
     // white chest + paws
     sph(group, 0.08, COLORS.white, 0, 0.25, 0.22, [1, 1, 0.6]);
-    [-0.07, 0.07].forEach((px) => sph(group, 0.04, COLORS.white, px, 0.03, 0.2, [1, 0.6, 1.4]));
+    [-0.07, 0.07].forEach((px, index) => {
+      const paw = new THREE.Group();
+      paw.position.set(px, 0.03, 0.2);
+      sph(paw, 0.04, COLORS.white, 0, 0, 0, [1, 0.6, 1.4]);
+      group.add(paw);
+      if (index === 0) animatedParts.catPaw = paw;
+    });
 
     const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 24), catMat);
     tail.position.set(0, 0.28, -0.28);
@@ -627,8 +679,16 @@ const Room = (() => {
     face.rotation.x = Math.PI / 2; clock.add(face);
     const rim = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.025, 8, 24), makeMat(COLORS.black));
     rim.position.z = 0.02; clock.add(rim);
-    box(clock, 0.015, 0.16, 0.01, COLORS.black, 0, 0.07, 0.04);
-    const h = box(clock, 0.015, 0.11, 0.01, COLORS.black, 0.04, 0.0, 0.04); h.rotation.z = -1.2;
+    const minuteHand = new THREE.Group();
+    minuteHand.position.set(0, 0, 0.045);
+    box(minuteHand, 0.015, 0.16, 0.01, COLORS.black, 0, 0.07, 0);
+    clock.add(minuteHand);
+    const hourHand = new THREE.Group();
+    hourHand.position.set(0, 0, 0.046);
+    const hourHandMesh = box(hourHand, 0.015, 0.11, 0.01, COLORS.black, 0.04, 0.0, 0);
+    hourHandMesh.rotation.z = -1.2;
+    clock.add(hourHand);
+    animatedParts.clockHands = { minute: minuteHand, hour: hourHand };
     root.add(clock);
 
     // gallery of small frames on back wall (right of window) + over the bed
@@ -669,11 +729,13 @@ const Room = (() => {
 
   function buildStringLights() {
     const n = 22;
+    const bulbs = [];
     for (let i = 0; i < n; i++) {
       const t = i / (n - 1);
       const x = -3.2 + t * 6.4;
       const y = 4.2 - Math.sin(t * Math.PI * 3) * 0.0 - Math.abs(Math.sin(t * Math.PI * 4)) * 0.18;
-      sph(root, 0.035, i % 2 ? 0xffe2b0 : 0xfff3d6, x, y, -2.9, null, { emissive: 0xffd9a0, emissiveIntensity: 0.9 });
+      const bulb = sph(root, 0.035, i % 2 ? 0xffe2b0 : 0xfff3d6, x, y, -2.9, null, { emissive: 0xffd9a0, emissiveIntensity: 0.9 });
+      bulbs.push(bulb);
       if (i < n - 1) {
         const wire = new THREE.Mesh(new THREE.BoxGeometry(6.4 / n, 0.006, 0.006), makeMat(COLORS.black));
         wire.position.set(x + 0.15, y - 0.01, -2.9);
@@ -683,6 +745,8 @@ const Room = (() => {
     const pl = new THREE.PointLight(0xffd9a0, 0.4, 6);
     pl.position.set(0, 3.9, -2.4);
     root.add(pl);
+    animatedParts.stringBulbs = bulbs;
+    animatedParts.stringLight = pl;
   }
 
   // --------------------------------------------------------------- clutter
@@ -692,7 +756,8 @@ const Room = (() => {
     lamp.position.set(3.0, 0, 0.0);
     cyl(lamp, 0.18, 0.2, 0.04, COLORS.black, 0, 0.02, 0);
     cyl(lamp, 0.015, 0.015, 1.8, COLORS.black, 0, 0.92, 0, {}, 8);
-    cyl(lamp, 0.15, 0.28, 0.35, COLORS.cream, 0, 1.9, 0, { emissive: 0xffe2b0, emissiveIntensity: 0.35 });
+    const shade = cyl(lamp, 0.15, 0.28, 0.35, COLORS.cream, 0, 1.9, 0, { emissive: 0xffe2b0, emissiveIntensity: 0.35 });
+    animatedParts.floorLampShade = shade;
     root.add(lamp);
 
     // wicker basket with blanket
@@ -714,6 +779,7 @@ const Room = (() => {
     box(gtr, 0.06, 0.9, 0.04, COLORS.black, 0, 1.2, 0);
     box(gtr, 0.1, 0.2, 0.04, COLORS.woodDark, 0, 1.75, 0);
     root.add(gtr);
+    animatedParts.guitar = gtr;
 
     // cardboard boxes stack
     box(root, 0.55, 0.4, 0.45, 0xb98b5e, 3.0, 0.2, -0.9).rotation.y = 0.2;
@@ -723,7 +789,10 @@ const Room = (() => {
     // floor book stacks
     [[-1.8, -2.4], [-1.9, -0.1]].forEach(([x, z], k) => {
       for (let i = 0; i < 4 + k; i++) {
-        box(root, 0.35 - i * 0.02, 0.07, 0.25, [COLORS.black, COLORS.cream, COLORS.tan, COLORS.coffee, COLORS.white][i], x, 0.04 + i * 0.075, z).rotation.y = i * 0.35;
+        const book = box(root, 0.35 - i * 0.02, 0.07, 0.25, [COLORS.black, COLORS.cream, COLORS.tan, COLORS.coffee, COLORS.white][i], x, 0.04 + i * 0.075, z);
+        book.rotation.y = i * 0.35;
+        book.userData.reaction = "book";
+        book.userData.mass = 2.2;
       }
     });
     // cup on the book stack
@@ -782,9 +851,12 @@ const Room = (() => {
       p.rotation.z = (i - 1.5) * 0.12;
     });
     // book stack + mug on top
-    [[0.5, COLORS.black], [0.44, COLORS.cream], [0.4, COLORS.coffee]].forEach(([w, c], i) =>
-      box(root, w, 0.06, 0.32, c, 0.35, y + 0.06 + i * 0.065, -2.7).rotation.y = i * 0.15
-    );
+    [[0.5, COLORS.black], [0.44, COLORS.cream], [0.4, COLORS.coffee]].forEach(([w, c], i) => {
+      const book = box(root, w, 0.06, 0.32, c, 0.35, y + 0.06 + i * 0.065, -2.7);
+      book.rotation.y = i * 0.15;
+      book.userData.reaction = "book";
+      book.userData.mass = 2.2;
+    });
     cyl(root, 0.05, 0.045, 0.08, COLORS.white, 0.35, y + 0.24, -2.7);
     // desk plant
     cyl(root, 0.06, 0.05, 0.08, COLORS.white, -1.15, y + 0.05, -2.7);

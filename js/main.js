@@ -79,9 +79,16 @@
   function easeInteractiveObjects() {
     interactiveObjects.forEach((group) => {
       const targetScale = group.userData.hoverTargetScale || 1;
-      const currentScale = group.scale.x;
+      const currentScale = group.userData.hoverCurrentScale || 1;
       const newScale = currentScale + (targetScale - currentScale) * 0.15;
-      group.scale.set(newScale, newScale, newScale);
+      group.userData.hoverCurrentScale = newScale;
+      const baseScale = group.userData.baseScale || new THREE.Vector3(1, 1, 1);
+      const landingScale = group.userData.landingScale || new THREE.Vector3(1, 1, 1);
+      group.scale.set(
+        baseScale.x * newScale * landingScale.x,
+        baseScale.y * newScale * landingScale.y,
+        baseScale.z * newScale * landingScale.z
+      );
 
       const targetTilt = group.userData.hoverTilt || 0;
       group.rotation.z += (targetTilt - group.rotation.z) * 0.15;

@@ -17,6 +17,9 @@ const Animations = (() => {
   let catState = "sitting";
   let catStateTimer = 0;
   let catWalkTarget = new THREE.Vector3();
+  let guitarStrumUntil = 0;
+  let typingStartedAt = 0;
+  let clockSpinUntil = 0;
 
   function init({ animatedParts: parts, lights: sceneLights, scene: scn }) {
     animatedParts = parts;
@@ -61,6 +64,20 @@ const Animations = (() => {
 
     if (reducedMotion) return; // keep pose but skip continuous motion
 
+    const now = performance.now();
+    const stretchAt = catGroup.userData.stretchStartedAt || 0;
+    const stretchProgress = Math.max(0, 1 - (now - stretchAt) / 1100);
+    if (animatedParts.catBody) {
+      animatedParts.catBody.scale.y = 0.9 * (1 + Math.sin(stretchProgress * Math.PI) * 0.28);
+      animatedParts.catBody.scale.x = 1.2 * (1 + Math.sin(stretchProgress * Math.PI) * 0.08);
+    }
+
+    const batAt = catGroup.userData.batStartedAt || 0;
+    const batProgress = Math.max(0, 1 - (now - batAt) / 650);
+    if (animatedParts.catPaw) {
+      animatedParts.catPaw.rotation.z = Math.sin((1 - batProgress) * Math.PI * 3) * 0.72 * batProgress;
+    }
+
     if (catTail) {
       catTail.rotation.z = Math.sin(clock.elapsedTime * 2) * 0.15;
     }
@@ -95,8 +112,13 @@ const Animations = (() => {
     const t = clock.elapsedTime;
 
     if (animatedParts.plantLeaves) {
-      animatedParts.plantLeaves.rotation.z = Math.sin(t * 0.8) * 0.03;
-      animatedParts.plantLeaves.rotation.x = Math.cos(t * 0.6) * 0.02;
+      animatedParts.plantLeaves.rotation.z = Math.sin(t * 0.8) * 0.055;
+      animatedParts.plantLeaves.rotation.x = Math.cos(t * 0.6) * 0.035;
+    }
+
+    if (animatedParts.hangingPlant) {
+      animatedParts.hangingPlant.rotation.z = Math.sin(t * 0.55) * 0.035;
+      animatedParts.hangingPlant.rotation.x = Math.cos(t * 0.42) * 0.025;
     }
 
     if (animatedParts.laptopScreen) {
@@ -105,8 +127,63 @@ const Animations = (() => {
     }
 
     if (lights.lamp && isNight) {
-  lights.lamp.intensity = lights.lamp.userData.base * (0.97 + Math.sin(t * 3) * 0.03);
-}
+      lights.lamp.intensity = lights.lamp.userData.base * (
+        0.99 + Math.sin(t * 2.7) * 0.008 + Math.sin(t * 7.1) * 0.003
+      );
+    }
+    const lampGlow = 0.32 + Math.sin(t * 2.7) * 0.012 + Math.sin(t * 7.1) * 0.006;
+    if (animatedParts.lampShade) animatedParts.lampShade.material.emissiveIntensity = lampGlow;
+    if (animatedParts.floorLampShade) animatedParts.floorLampShade.material.emissiveIntensity = lampGlow;
+
+    if (animatedParts.stringBulbs) {
+      animatedParts.stringBulbs.forEach((bulb, i) => {
+        bulb.material.emissiveIntensity = 0.75 + (Math.sin(t * 2.4 + i * 0.83) + 1) * 0.13;
+      });
+    }
+    if (animatedParts.stringLight) {
+      animatedParts.stringLight.intensity = 0.35 + (Math.sin(t * 2.4) + 1) * 0.08;
+    }
+
+    if (animatedParts.dustMotes) {
+      const { points, speeds } = animatedParts.dustMotes;
+      const positions = points.geometry.attributes.position;
+      for (let i = 0; i < positions.count; i++) {
+        const x = animatedParts.dustMotes.basePositions[i * 3] + Math.sin(t * 0.7 + i) * 0.12;
+        const y = positions.getY(i) + speeds[i] * delta;
+        positions.setX(i, x > 2.8 ? 0.45 : x);
+        positions.setY(i, y > 3.4 ? 0.8 : y);
+      }
+      positions.needsUpdate = true;
+    }
+
+    if (animatedParts.clockHands) {
+      const spin = performance.now() < clockSpinUntil ? 5 : 1;
+      animatedParts.clockHands.minute.rotation.z = -t * 0.22 * spin;
+      animatedParts.clockHands.hour.rotation.z = -t * 0.018 * spin;
+    }
+
+    if (animatedParts.guitar) {
+      const guitar = animatedParts.guitar;
+      if (guitar.userData.baseRotationX === undefined) guitar.userData.baseRotationX = guitar.rotation.x;
+      if (guitar.userData.baseRotationY === undefined) guitar.userData.baseRotationY = guitar.rotation.y;
+      const strumming = performance.now() < guitarStrumUntil;
+      const pulse = strumming ? Math.sin(t * 34) : 0;
+      guitar.rotation.x = guitar.userData.baseRotationX + pulse * 0.1;
+      guitar.rotation.y = guitar.userData.baseRotationY + pulse * 0.07;
+    }
+
+    if (animatedParts.laptopTyping) {
+      const typing = typingStartedAt > 0 && performance.now() - typingStartedAt < 2800;
+      const typingTime = (performance.now() - typingStartedAt) / 1000;
+      animatedParts.laptopTyping.lines.forEach((line, i) => {
+        const baseWidth = 0.24 - i * 0.035;
+        const reveal = typing ? THREE.MathUtils.clamp((typingTime * 4 - i * 0.45) % 1.2, 0.1, 1) : 1;
+        line.scale.x = reveal;
+        line.material.opacity = typing ? 0.55 + (Math.sin(t * 9 + i) + 1) * 0.2 : 0.8;
+        line.position.x = -0.15 - (0.24 - baseWidth) * 0.5;
+      });
+      animatedParts.laptopTyping.caret.visible = typing && Math.floor(t * 4) % 2 === 0;
+    }
     if (animatedParts.sparkles) {
       const positions = animatedParts.sparkles.geometry.attributes.position;
       for (let i = 0; i < positions.count; i++) {
@@ -139,5 +216,14 @@ const Animations = (() => {
     updateAmbient(delta);
   }
 
-  return { init, update, setNightMode, get isNight() { return isNight; } };
+  function playInteraction(type) {
+    if (type === "guitar") guitarStrumUntil = performance.now() + 700;
+    if (type === "laptop") typingStartedAt = performance.now();
+    if (type === "clock") clockSpinUntil = performance.now() + 900;
+    if (type === "cat" && animatedParts.catGroup) {
+      animatedParts.catGroup.userData.stretchStartedAt = performance.now();
+    }
+  }
+
+  return { init, update, setNightMode, playInteraction, get isNight() { return isNight; } };
 })();
