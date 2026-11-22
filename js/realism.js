@@ -151,12 +151,21 @@ const Realism = (() => {
         if (p.width === 7 && p.height === 5.8) {            // floor
           floorTex.repeat.set(4, 4);
           m.map = floorTex; m.color.set(0xffffff); m.roughness = 0.7; m.roughnessMap = rough; m.needsUpdate = true;
+          m.polygonOffset = true;
+          m.polygonOffsetFactor = 1;
+          m.polygonOffsetUnits = 1;
         } else if (p.width === 7 && p.height === 4.4) {      // back wall
           backTex.repeat.set(3, 2);
           m.map = backTex; m.color.set(0xffffff); m.roughness = 0.95; m.needsUpdate = true;
+          m.polygonOffset = true;
+          m.polygonOffsetFactor = 1;
+          m.polygonOffsetUnits = 1;
         } else if (p.width === 5.8 && p.height === 4.4) {    // side wall
           sideTex.repeat.set(3, 2);
           m.map = sideTex; m.color.set(0xffffff); m.roughness = 0.95; m.needsUpdate = true;
+          m.polygonOffset = true;
+          m.polygonOffsetFactor = 1;
+          m.polygonOffsetUnits = 1;
         } else if (p.width === 0.02 && p.height === 5.8) {   // old plank lines, now in the texture
           o.visible = false;
         }
@@ -193,9 +202,9 @@ const Realism = (() => {
       m.castShadow = m.receiveShadow = true;
       root.add(m);
     };
-    slab(7.18, 4.4, 0.18, -0.09, 2.2, -3.09, 0xe9dfcf);  // back wall thickness
-    slab(0.18, 4.4, 5.98, -3.59, 2.2, -0.19, 0x3a322c);  // side wall thickness
-    slab(7.18, 0.4, 5.98, -0.09, -0.2, -0.19, 0x3a2a1d); // floor slab
+    slab(7.18, 4.4, 0.18, -0.09, 2.2, -3.13, 0xe9dfcf);  // back wall thickness
+    slab(0.18, 4.4, 5.98, -3.63, 2.2, -0.19, 0x3a322c);  // side wall thickness
+    slab(7.18, 0.38, 5.98, -0.09, -0.21, -0.19, 0x3a2a1d); // floor slab
 
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.22 }));
     ground.rotation.x = -Math.PI / 2;

@@ -60,7 +60,13 @@ const RoomScene = (() => {
     camera.position.set(5, 3.4, 6.3);
     camera.lookAt(0, 1.2, 0);
 
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
+    renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false,
+      logarithmicDepthBuffer: true,
+      powerPreference: "high-performance"
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLowPower ? 1.5 : 2.5));
     renderer.shadowMap.enabled = !isLowPower;
@@ -91,8 +97,8 @@ const RoomScene = (() => {
     lights.sun.castShadow = !isLowPower;
     lights.sun.shadow.mapSize.set(isLowPower ? 2048 : 4096, isLowPower ? 2048 : 4096);
     Object.assign(lights.sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 0.5, far: 28 });
-    lights.sun.shadow.bias = -0.0004;
-    lights.sun.shadow.normalBias = 0.03;
+    lights.sun.shadow.bias = -0.0008;
+    lights.sun.shadow.normalBias = 0.08;
     scene.add(lights.sun, lights.sun.target);
 
     // Light coming through the window: casts the mullion cross and curtain shadows on the floor
@@ -103,8 +109,8 @@ const RoomScene = (() => {
     lights.window.shadow.mapSize.set(isLowPower ? 1024 : 2048, isLowPower ? 1024 : 2048);
     lights.window.shadow.camera.near = 1;
     lights.window.shadow.camera.far = 14;
-    lights.window.shadow.bias = -0.0005;
-    lights.window.shadow.normalBias = 0.03;
+    lights.window.shadow.bias = -0.001;
+    lights.window.shadow.normalBias = 0.06;
     scene.add(lights.window, lights.window.target);
 
     // Practical lights (lamps, fairy lights, laptop)
