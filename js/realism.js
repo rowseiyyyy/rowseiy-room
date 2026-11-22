@@ -23,7 +23,7 @@ const Realism = (() => {
     draw(c.getContext("2d"), w, h);
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.anisotropy = 8;
+    t.anisotropy = 16;
     return color ? srgb(t) : t;
   }
 
@@ -117,7 +117,7 @@ const Realism = (() => {
     r = Math.min(r, Math.min(w, h, d) * 0.45);
     const key = [w, h, d, r].map((n) => n.toFixed(4)).join();
     if (cache[key]) return cache[key];
-    const g = new THREE.BoxGeometry(w, h, d, 4, 4, 4);
+    const g = new THREE.BoxGeometry(w, h, d, 8, 8, 8);
     const pos = g.attributes.position, nor = g.attributes.normal;
     const hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r;
     const v = new THREE.Vector3(), c = new THREE.Vector3(), n = new THREE.Vector3();
@@ -149,10 +149,13 @@ const Realism = (() => {
 
       if (g.type === "PlaneGeometry") {
         if (p.width === 7 && p.height === 5.8) {            // floor
+          floorTex.repeat.set(4, 4);
           m.map = floorTex; m.color.set(0xffffff); m.roughness = 0.7; m.roughnessMap = rough; m.needsUpdate = true;
         } else if (p.width === 7 && p.height === 4.4) {      // back wall
+          backTex.repeat.set(3, 2);
           m.map = backTex; m.color.set(0xffffff); m.roughness = 0.95; m.needsUpdate = true;
         } else if (p.width === 5.8 && p.height === 4.4) {    // side wall
+          sideTex.repeat.set(3, 2);
           m.map = sideTex; m.color.set(0xffffff); m.roughness = 0.95; m.needsUpdate = true;
         } else if (p.width === 0.02 && p.height === 5.8) {   // old plank lines, now in the texture
           o.visible = false;

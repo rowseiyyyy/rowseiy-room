@@ -44,7 +44,7 @@ const Room = (() => {
     p.add(m);
     return m;
   }
-  function cyl(p, rt, rb, h, c, x, y, z, o, seg = 14) {
+  function cyl(p, rt, rb, h, c, x, y, z, o, seg = 32) {
     const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), makeMat(c, o));
     m.position.set(x, y, z);
     m.castShadow = true;
@@ -52,7 +52,7 @@ const Room = (() => {
     return m;
   }
   function sph(p, r, c, x, y, z, sc, o) {
-    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 12), makeMat(c, o));
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 24, 16), makeMat(c, o));
     m.position.set(x, y, z);
     if (sc) m.scale.set(sc[0], sc[1], sc[2]);
     m.castShadow = true;
@@ -165,7 +165,7 @@ const Room = (() => {
     cyl(root, 0.04, 0.04, 0.12, COLORS.cream, 2.15, 1.97, -2.78);
 
     const moon = new THREE.Mesh(
-      new THREE.SphereGeometry(0.24, 16, 16),
+      new THREE.SphereGeometry(0.24, 32, 20),
       new THREE.MeshStandardMaterial({ color: 0xf5f0e6, emissive: 0xf5f0e6, emissiveIntensity: 0.6 })
     );
     moon.position.set(2.05, 3.3, -2.75);
@@ -190,7 +190,7 @@ const Room = (() => {
 
   // ---------------------------------------------------------------- curtain
   function buildCurtains() {
-    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 3.5, 10), makeMat(COLORS.black));
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 3.5, 32), makeMat(COLORS.black));
     rod.rotation.z = Math.PI / 2;
     rod.position.set(1.7, 4.0, -2.75);
     root.add(rod);
@@ -370,7 +370,7 @@ const Room = (() => {
     const leafMat = makeMat(0x55663f);
     const leafGroup = new THREE.Group();
     for (let i = 0; i < 7; i++) {
-      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), leafMat);
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 14), leafMat);
       const a = (i / 7) * Math.PI * 2;
       leaf.position.set(Math.cos(a) * 0.14, 0.5 + Math.random() * 0.35, Math.sin(a) * 0.14);
       leaf.castShadow = true;
@@ -442,18 +442,18 @@ const Room = (() => {
     group.scale.setScalar(0.9);
 
     const catMat = makeMat(0x2a2623);       // black cat, white socks
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), catMat);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 16), catMat);
     body.scale.set(1.2, 0.9, 1);
     body.position.y = 0.2;
     body.castShadow = true;
     group.add(body);
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 12), catMat);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15, 24, 16), catMat);
     head.position.set(0, 0.36, 0.2);
     head.castShadow = true;
     group.add(head);
 
-    const earGeo = new THREE.ConeGeometry(0.05, 0.09, 8);
+    const earGeo = new THREE.ConeGeometry(0.05, 0.09, 24);
     [-0.08, 0.08].forEach((ex) => {
       const ear = new THREE.Mesh(earGeo, catMat);
       ear.position.set(ex, 0.47, 0.2);
@@ -464,7 +464,7 @@ const Room = (() => {
     sph(group, 0.08, COLORS.white, 0, 0.25, 0.22, [1, 1, 0.6]);
     [-0.07, 0.07].forEach((px) => sph(group, 0.04, COLORS.white, px, 0.03, 0.2, [1, 0.6, 1.4]));
 
-    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 8), catMat);
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.35, 24), catMat);
     tail.position.set(0, 0.28, -0.28);
     tail.rotation.x = 0.9;
     group.add(tail);
@@ -500,25 +500,25 @@ const Room = (() => {
     const white = makeMat(COLORS.white);
     const dark = makeMat(COLORS.woodDark);
 
-    const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 14), fur);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 28, 18), fur);
     body.scale.set(1.5, 0.8, 1);
     body.position.set(0, 0.2, -0.05);
     body.castShadow = true;
     group.add(body);
     sph(group, 0.17, COLORS.white, 0, 0.2, 0.2, [1.3, 0.7, 1]); // chest
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 14, 14), fur);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.19, 28, 18), fur);
     head.position.set(0.3, 0.3, 0.2);
     head.castShadow = true;
     group.add(head);
-    const snout = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), white);
+    const snout = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 16), white);
     snout.scale.set(1, 0.8, 1.3);
     snout.position.set(0.3, 0.25, 0.37);
     group.add(snout);
     sph(group, 0.035, COLORS.black, 0.3, 0.28, 0.47);                         // nose
     [0.22, 0.38].forEach((ex) => {
       sph(group, 0.022, COLORS.black, ex, 0.35, 0.36);                        // eyes
-      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), dark); // floppy ears
+      const ear = new THREE.Mesh(new THREE.SphereGeometry(0.09, 20, 14), dark); // floppy ears
       ear.scale.set(0.6, 1.3, 0.8);
       ear.position.set(ex + (ex < 0.3 ? -0.1 : 0.1), 0.3, 0.17);
       group.add(ear);
@@ -526,7 +526,7 @@ const Room = (() => {
     // paws
     [[0.15, 0.3], [0.42, 0.3]].forEach(([px, pz]) => sph(group, 0.06, COLORS.white, px - 0.1, 0.05, pz + 0.05, [1, 0.7, 1.5]));
 
-    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 0.3, 8), fur);
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.04, 0.3, 24), fur);
     tail.position.set(-0.42, 0.22, -0.08);
     tail.rotation.z = 1.0;
     group.add(tail);
@@ -553,7 +553,7 @@ const Room = (() => {
     const arm = cyl(group, 0.015, 0.015, 0.5, 0x2a2a2a, 0, 0.25, 0, {}, 8);
     arm.rotation.z = 0.3;
     const shade = new THREE.Mesh(
-      new THREE.ConeGeometry(0.12, 0.16, 12, 1, true),
+      new THREE.ConeGeometry(0.12, 0.16, 32, 2, true),
       makeMat(COLORS.cream, { side: THREE.DoubleSide })
     );
     shade.position.set(0.2, 0.5, 0);
@@ -582,12 +582,12 @@ const Room = (() => {
     sph(root, 0.04, COLORS.black, -0.05, 1.07, -2.05, [1, 0.6, 1.4]); // mouse
 
     // big rug under desk chair
-    const rug = new THREE.Mesh(new THREE.CircleGeometry(1.2, 32), makeMat(COLORS.cream, { roughness: 1 }));
+    const rug = new THREE.Mesh(new THREE.CircleGeometry(1.2, 64), makeMat(COLORS.cream, { roughness: 1 }));
     rug.rotation.x = -Math.PI / 2;
     rug.position.set(0.3, 0.01, -0.3);
     rug.receiveShadow = true;
     root.add(rug);
-    const rug2 = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.0, 32), makeMat(COLORS.coffee, { roughness: 1 }));
+    const rug2 = new THREE.Mesh(new THREE.RingGeometry(0.8, 1.0, 64), makeMat(COLORS.coffee, { roughness: 1 }));
     rug2.rotation.x = -Math.PI / 2;
     rug2.position.set(0.3, 0.012, -0.3);
     root.add(rug2);
@@ -623,7 +623,7 @@ const Room = (() => {
     // round wall clock
     const clock = new THREE.Group();
     clock.position.set(-1.6, 3.55, -2.93);
-    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.05, 24), makeMat(COLORS.white));
+    const face = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.05, 48), makeMat(COLORS.white));
     face.rotation.x = Math.PI / 2; clock.add(face);
     const rim = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.025, 8, 24), makeMat(COLORS.black));
     rim.position.z = 0.02; clock.add(rim);

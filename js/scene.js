@@ -60,11 +60,12 @@ const RoomScene = (() => {
     camera.position.set(5, 3.4, 6.3);
     camera.lookAt(0, 1.2, 0);
 
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: !isLowPower, alpha: false, powerPreference: "high-performance" });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLowPower ? 1.5 : 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLowPower ? 1.5 : 2.5));
     renderer.shadowMap.enabled = !isLowPower;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.autoUpdate = true;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     if ("outputColorSpace" in renderer) renderer.outputColorSpace = THREE.SRGBColorSpace;
     else renderer.outputEncoding = THREE.sRGBEncoding;
@@ -88,7 +89,7 @@ const RoomScene = (() => {
     lights.sun.position.set(6, 9, 7);
     lights.sun.target.position.set(0, 1, 0);
     lights.sun.castShadow = !isLowPower;
-    lights.sun.shadow.mapSize.set(2048, 2048);
+    lights.sun.shadow.mapSize.set(isLowPower ? 2048 : 4096, isLowPower ? 2048 : 4096);
     Object.assign(lights.sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 0.5, far: 28 });
     lights.sun.shadow.bias = -0.0004;
     lights.sun.shadow.normalBias = 0.03;
@@ -99,7 +100,7 @@ const RoomScene = (() => {
     lights.window.position.set(1.7, 3.2, -5.2);
     lights.window.target.position.set(0.9, 0.3, -0.2);
     lights.window.castShadow = !isLowPower;
-    lights.window.shadow.mapSize.set(1024, 1024);
+    lights.window.shadow.mapSize.set(isLowPower ? 1024 : 2048, isLowPower ? 1024 : 2048);
     lights.window.shadow.camera.near = 1;
     lights.window.shadow.camera.far = 14;
     lights.window.shadow.bias = -0.0005;
@@ -150,6 +151,7 @@ const RoomScene = (() => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLowPower ? 1.5 : 2.5));
   }
 
   return {

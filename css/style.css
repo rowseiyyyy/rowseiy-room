@@ -88,7 +88,12 @@ html, body {
 }
 #loading-screen.hidden { opacity: 0; pointer-events: none; }
 .loading-content { text-align: center; color: var(--color-text-soft); }
-.loading-cat { font-size: 3rem; animation: bob 1.6s ease-in-out infinite; }
+.loading-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  animation: bob 1.6s ease-in-out infinite;
+}
 @keyframes bob { 0%, 100% { transform: translateY(0);} 50% { transform: translateY(-10px);} }
 
 /* ---------- Welcome toast ---------- */
@@ -129,6 +134,9 @@ html, body {
   pointer-events: none;
 }
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--color-text);
@@ -140,6 +148,12 @@ html, body {
   border-radius: 18px;
   box-shadow: var(--glass-shadow);
   pointer-events: auto;
+}
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 .controls { display: flex; gap: 10px; pointer-events: auto; }
 .icon-btn {
