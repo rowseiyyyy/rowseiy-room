@@ -128,7 +128,7 @@ const Portfolio = (() => {
       const a = PORTFOLIO_DATA.about;
       return `
         <h2>${sectionIcon("user")} About Me</h2>
-        <img class="about-photo" src="images/about-photo-placeholder.svg" alt="Placeholder portrait">
+        <img class="about-photo" src="images/formal-photo.jpg" alt="Portrait of Rosemay">
         <p class="subtitle">${escapeHtml(a.role)}</p>
         <p>${escapeHtml(a.intro)}</p>
         <h3 style="margin-top:18px;">Things I enjoy building</h3>
