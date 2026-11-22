@@ -149,18 +149,21 @@ const Realism = (() => {
 
       if (g.type === "PlaneGeometry") {
         if (p.width === 7 && p.height === 5.8) {            // floor
+          o.userData.structural = true;
           floorTex.repeat.set(4, 4);
           m.map = floorTex; m.color.set(0xffffff); m.roughness = 0.7; m.roughnessMap = rough; m.needsUpdate = true;
           m.polygonOffset = true;
           m.polygonOffsetFactor = 1;
           m.polygonOffsetUnits = 1;
         } else if (p.width === 7 && p.height === 4.4) {      // back wall
+          o.userData.structural = true;
           backTex.repeat.set(3, 2);
           m.map = backTex; m.color.set(0xffffff); m.roughness = 0.95; m.needsUpdate = true;
           m.polygonOffset = true;
           m.polygonOffsetFactor = 1;
           m.polygonOffsetUnits = 1;
         } else if (p.width === 5.8 && p.height === 4.4) {    // side wall
+          o.userData.structural = true;
           sideTex.repeat.set(3, 2);
           m.map = sideTex; m.color.set(0xffffff); m.roughness = 0.95; m.needsUpdate = true;
           m.polygonOffset = true;
@@ -198,6 +201,7 @@ const Realism = (() => {
   function addDioramaBase(root) {
     const slab = (w, h, d, x, y, z, color) => {
       const m = new THREE.Mesh(roundedBox(w, h, d, 0.02), new THREE.MeshStandardMaterial({ color, roughness: 0.85 }));
+      m.userData.structural = true;
       m.position.set(x, y, z);
       m.castShadow = m.receiveShadow = true;
       root.add(m);
@@ -207,6 +211,7 @@ const Realism = (() => {
     slab(7.18, 0.38, 5.98, -0.09, -0.21, -0.19, 0x3a2a1d); // floor slab
 
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.22 }));
+    ground.userData.structural = true;
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.41;
     ground.receiveShadow = true;
@@ -227,6 +232,7 @@ const Realism = (() => {
         new THREE.PlaneGeometry(w, d),
         new THREE.MeshBasicMaterial({ map, transparent: true, opacity: op, depthWrite: false })
       );
+      m.userData.structural = true;
       m.rotation.x = -Math.PI / 2;
       m.position.set(x, 0.004, z);
       m.renderOrder = 1;
@@ -238,8 +244,10 @@ const Realism = (() => {
     const map = gradientStrip();
     const mat = () => new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false });
     const back = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.0), mat());
+    back.userData.structural = true;
     back.position.set(0, 0.5, -2.93);
     const side = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 1.0), mat());
+    side.userData.structural = true;
     side.rotation.y = Math.PI / 2;
     side.position.set(-3.39, 0.5, -0.1);
     root.add(back, side);
