@@ -12,6 +12,7 @@ const Animations = (() => {
   let revealStartedAt = performance.now();
   let clock = new THREE.Clock();
   let isNight = false;
+  let stringLightLevel = 1;
   let reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // cat state machine
@@ -149,11 +150,11 @@ const Animations = (() => {
 
     if (animatedParts.stringBulbs) {
       animatedParts.stringBulbs.forEach((bulb, i) => {
-        bulb.material.emissiveIntensity = 0.75 + (Math.sin(t * 2.4 + i * 0.83) + 1) * 0.13;
+        bulb.material.emissiveIntensity = (0.75 + (Math.sin(t * 2.4 + i * 0.83) + 1) * 0.13) * stringLightLevel;
       });
     }
     if (animatedParts.stringLight) {
-      animatedParts.stringLight.intensity = 0.35 + (Math.sin(t * 2.4) + 1) * 0.08;
+      animatedParts.stringLight.intensity = (0.35 + (Math.sin(t * 2.4) + 1) * 0.08) * stringLightLevel;
     }
 
     if (animatedParts.dustMotes) {
@@ -207,20 +208,30 @@ const Animations = (() => {
     }
   }
 
-  function setNightMode(night) {
-  isNight = night;
-  const from = RoomScene.mood, to = night ? 1 : 0;
-  const duration = reducedMotion ? 0 : 1200, start = performance.now();
-  if (animatedParts.moon) animatedParts.moon.visible = night;
-  if (animatedParts.stars) animatedParts.stars.visible = night;
-  function step(now) {
-    const p = duration === 0 ? 1 : Math.min((now - start) / duration, 1);
-    const e = 1 - Math.pow(1 - p, 3);
-    RoomScene.setMood(from + (to - from) * e);
-    if (p < 1) requestAnimationFrame(step);
+  function setMoodValue(value, night = value >= 0.5) {
+    isNight = night;
+    const from = RoomScene.mood;
+    const to = THREE.MathUtils.clamp(value, 0, 1);
+    const duration = reducedMotion ? 0 : 1200;
+    const start = performance.now();
+    if (animatedParts.moon) animatedParts.moon.visible = night;
+    if (animatedParts.stars) animatedParts.stars.visible = night;
+    function step(now) {
+      const progress = duration === 0 ? 1 : Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      RoomScene.setMood(from + (to - from) * eased);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
   }
-  requestAnimationFrame(step);
-}
+
+  function setNightMode(night) {
+    setMoodValue(night ? 1 : 0, night);
+  }
+
+  function setStringLightLevel(level) {
+    stringLightLevel = THREE.MathUtils.clamp(level, 0, 1.5);
+  }
 
   function update() {
     const delta = clock.getDelta();
@@ -237,5 +248,13 @@ const Animations = (() => {
     }
   }
 
-  return { init, update, setNightMode, playInteraction, get isNight() { return isNight; } };
+  return {
+    init,
+    update,
+    setNightMode,
+    setMoodValue,
+    setStringLightLevel,
+    playInteraction,
+    get isNight() { return isNight; },
+  };
 })();

@@ -55,6 +55,48 @@
     </div>
   </div>
 
+  <details class="room-tools" id="room-tools">
+    <summary>Room tools</summary>
+    <div class="room-tools-panel">
+      <label>Room preset
+        <select id="room-preset">
+          <option value="study">Study Session</option>
+          <option value="rainy">Rainy Evening</option>
+          <option value="weekend">Weekend</option>
+          <option value="custom" hidden>Custom</option>
+        </select>
+      </label>
+      <label>Ambience
+        <select id="ambience-select">
+          <option value="quiet">Quiet</option>
+          <option value="rain">Soft rain</option>
+          <option value="music">Instrumental music</option>
+        </select>
+      </label>
+      <label>Seasonal details
+        <select id="season-select">
+          <option value="none">None</option>
+          <option value="spring">Spring petals</option>
+          <option value="summer">Summer sparkles</option>
+          <option value="autumn">Autumn leaves</option>
+          <option value="winter">Winter snow</option>
+        </select>
+      </label>
+      <div class="room-tool-actions">
+        <button type="button" id="surprise-button">Surprise me</button>
+        <button type="button" id="daylife-button">A day in my life</button>
+        <button type="button" id="guestbook-button">Guestbook</button>
+        <button type="button" id="postcard-button">Make a postcard</button>
+        <button type="button" id="how-made-button">How this room was made</button>
+        <button type="button" id="photo-mode-button">Room photo mode</button>
+      </div>
+    </div>
+  </details>
+
+  <div class="season-effects" id="season-effects" aria-hidden="true"></div>
+  <button class="photo-mode-exit" id="photo-mode-exit" type="button" hidden>Exit photo mode</button>
+  <div class="feature-status" id="feature-status" role="status" aria-live="polite"></div>
+
   <!-- Hover hint -->
   <div id="hover-hint" class="hover-hint" aria-hidden="true"></div>
 
@@ -116,7 +158,19 @@
       </svg>
       Contact
     </button>
+    <button data-target="how-made">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="m12 3 2.4 5.2L20 10l-5.6 1.8L12 17l-2.4-5.2L4 10l5.6-1.8L12 3Z"/>
+        <path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/>
+      </svg>
+      How it's made
+    </button>
   </nav>
+
+  <div class="zoom-controls" role="group" aria-label="Room zoom controls">
+    <button id="zoom-out" type="button" aria-label="Zoom out of the room" title="Zoom out">−</button>
+    <button id="zoom-in" type="button" aria-label="Zoom into the room" title="Zoom in">+</button>
+  </div>
 
   <!-- Portfolio overlay -->
   <div id="overlay" class="overlay" aria-hidden="true">
@@ -145,6 +199,7 @@
   <script src="js/interactions.js"></script>
   <script src="js/animations.js"></script>
   <script src="js/portfolio.js"></script>
+  <script src="js/features.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -28,6 +28,7 @@ const Interactions = (() => {
 
   // gentle camera look-around
   let isDragging = false;
+  let canvasPointerActive = false;
   let dragStart = { x: 0, y: 0 };
   let dragDistance = 0; // total pointer travel since pointerdown, used to tell a tap from a drag
   const TAP_THRESHOLD = 6; // px - below this, a pointerup counts as a click/tap
@@ -36,6 +37,12 @@ const Interactions = (() => {
   let targetAzimuth = 0;
   let targetElevation = 0;
   let cameraRadius = 9.7;
+  let targetCameraRadius = 9.7;
+  const MIN_CAMERA_RADIUS = 6.5;
+  const MAX_CAMERA_RADIUS = 13.5;
+  const activePointers = new Map();
+  let pinchStartDistance = 0;
+  let pinchStartRadius = 9.7;
   const lookAtPoint = new THREE.Vector3(0, 0.6, 0);
 
   function init({ camera: cam, scene: scn, canvas: cvs, interactiveObjects: objs, onActivate }) {
@@ -53,6 +60,8 @@ const Interactions = (() => {
 
     const initialOffset = camera.position.clone().sub(lookAtPoint);
     cameraRadius = initialOffset.length();
+    targetCameraRadius = cameraRadius;
+    pinchStartRadius = cameraRadius;
     baseAzimuth = Math.atan2(initialOffset.x, initialOffset.z);
     baseElevation = Math.atan2(initialOffset.y, Math.sqrt(initialOffset.x ** 2 + initialOffset.z ** 2));
     targetAzimuth = baseAzimuth;
@@ -63,6 +72,17 @@ const Interactions = (() => {
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerdown", onPointerDown);
     window.addEventListener("pointerup", onPointerUp);
+    canvas.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      setCameraZoom(event.deltaY > 0 ? 1 : -1);
+    }, { passive: false });
+    canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+
+    const zoomInButton = document.getElementById("zoom-in");
+    const zoomOutButton = document.getElementById("zoom-out");
+    zoomInButton?.addEventListener("click", () => setCameraZoom(-1));
+    zoomOutButton?.addEventListener("click", () => setCameraZoom(1));
+    updateZoomButtons();
 
     setupObjectNav();
   }
@@ -117,6 +137,22 @@ const Interactions = (() => {
   }
 
   function onPointerMove(event) {
+    if (activePointers.has(event.pointerId)) {
+      activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+    if (activePointers.size >= 2) {
+      event.preventDefault();
+      const points = Array.from(activePointers.values());
+      const distance = Math.hypot(
+        points[0].x - points[1].x,
+        points[0].y - points[1].y
+      );
+      if (pinchStartDistance > 0) {
+        setCameraRadius(pinchStartRadius * (pinchStartDistance / distance));
+      }
+      return;
+    }
+
     if (draggedObject) {
       dragDistance = Math.max(dragDistance, Math.sqrt(
         (event.clientX - dragStart.x) ** 2 +
@@ -209,6 +245,22 @@ const Interactions = (() => {
   }
 
   function onPointerDown(event) {
+    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (activePointers.size === 2) {
+      const points = Array.from(activePointers.values());
+      pinchStartDistance = Math.hypot(
+        points[0].x - points[1].x,
+        points[0].y - points[1].y
+      );
+      pinchStartRadius = targetCameraRadius;
+      canvasPointerActive = false;
+      isDragging = false;
+      draggedObject = null;
+      canvas.classList.remove("hoverable");
+      return;
+    }
+
+    canvasPointerActive = true;
     updatePointer(event);
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects(draggableObjects, true);
@@ -262,6 +314,13 @@ const Interactions = (() => {
   }
 
   function onPointerUp(event) {
+    activePointers.delete(event.pointerId);
+    if (activePointers.size < 2) pinchStartDistance = 0;
+    if (activePointers.size > 0) return;
+
+    if (!canvasPointerActive) return;
+    canvasPointerActive = false;
+
     if (draggedObject) {
       const thrownObject = draggedObject;
       if (bookWobble && bookWobble.object === thrownObject) {
@@ -522,6 +581,7 @@ const Interactions = (() => {
 
   function updateCamera() {
     updatePhysics();
+    cameraRadius += (targetCameraRadius - cameraRadius) * 0.12;
     // ease camera toward target angles for a smooth, non-jarring look-around
     baseAzimuth += (targetAzimuth - baseAzimuth) * 0.08;
     baseElevation += (targetElevation - baseElevation) * 0.08;
@@ -538,5 +598,21 @@ const Interactions = (() => {
     camera.lookAt(lookAtPoint);
   }
 
-  return { init, updateCamera, get hovered() { return hovered; } };
+  function setCameraRadius(radius) {
+    targetCameraRadius = THREE.MathUtils.clamp(radius, MIN_CAMERA_RADIUS, MAX_CAMERA_RADIUS);
+    updateZoomButtons();
+  }
+
+  function setCameraZoom(direction) {
+    setCameraRadius(targetCameraRadius + direction * 0.9);
+  }
+
+  function updateZoomButtons() {
+    const zoomInButton = document.getElementById("zoom-in");
+    const zoomOutButton = document.getElementById("zoom-out");
+    if (zoomInButton) zoomInButton.disabled = targetCameraRadius <= MIN_CAMERA_RADIUS;
+    if (zoomOutButton) zoomOutButton.disabled = targetCameraRadius >= MAX_CAMERA_RADIUS;
+  }
+
+  return { init, updateCamera, setCameraZoom, setCameraRadius, get hovered() { return hovered; } };
 })();

@@ -44,6 +44,14 @@ I'm a developer who loves building things that feel warm, playful, and a little 
 
 ---
 
+## Interactive Room Features
+
+The room includes lighting presets, optional ambience and seasonal details, a guided day-in-the-life tour, a skill-to-project map, project timelines and comparisons, surprise discovery, photo mode, and downloadable postcards. The 3D props use procedural wood grain and added details such as laptop keys, book spines, guitar strings, pet features, and stitched bedding.
+
+The guestbook is currently a non-submitting preview. Messages are not collected or stored; connect a hosted provider before enabling submissions. Project roles, reflections, timeline entries, and guided-tour content can be edited in `js/portfolio-data.js`.
+
+---
+
 ## Tech Stack
 
 <p>

@@ -29,6 +29,7 @@ const Portfolio = (() => {
     const media = project.media || {};
     const images = Array.isArray(media.images) ? media.images : [];
     const videos = Array.isArray(media.videos) ? media.videos : [];
+    if (!images.length && !videos.length) return "";
     const imageSlots = Math.max(2, images.length);
     const videoSlots = Math.max(1, videos.length);
 
@@ -103,6 +104,7 @@ const Portfolio = (() => {
     laptop: () => {
       const cards = PORTFOLIO_DATA.projects.map((p, index) => `
         <div class="info-card">
+          <label class="compare-choice"><input type="checkbox" data-compare-project="${index}"> Compare</label>
           <span class="status-badge">${escapeHtml(p.status)}</span>
           <h3>${escapeHtml(p.name)}</h3>
           <p>${escapeHtml(p.description)}</p>
@@ -111,6 +113,14 @@ const Portfolio = (() => {
             ${linkOrPlaceholder(p.github, "GitHub")}
             ${linkOrPlaceholder(p.demo, "Live Demo")}
           </div>
+          <section class="project-story">
+            <h4>Project timeline</h4>
+            <div class="milestone-list" role="group" aria-label="${escapeHtml(p.name)} timeline">
+              ${(p.milestones || []).map((milestone, milestoneIndex) => `<button type="button" class="milestone-button" data-project="${index}" data-milestone="${milestoneIndex}" aria-pressed="${milestoneIndex === 0}">${escapeHtml(milestone.title)}</button>`).join("")}
+            </div>
+            <p class="milestone-detail" id="milestone-detail-${index}">${escapeHtml(p.milestones && p.milestones[0] ? p.milestones[0].description : "Add project milestones in portfolio-data.js.")}</p>
+          </section>
+          <button type="button" class="feature-action" data-postcard-project="${index}">Make a postcard</button>
           ${renderProjectMedia(p, index)}
         </div>
       `).join("");
@@ -118,6 +128,11 @@ const Portfolio = (() => {
         <h2>${sectionIcon("laptop")} Projects</h2>
         <p class="subtitle">A few things I've been building.</p>
         <div class="card-grid">${cards}</div>
+        <section class="compare-section">
+          <h3>Project comparison</h3>
+          <p class="subtitle">Choose two projects to compare their goals, tools, roles, and takeaways.</p>
+          <div class="comparison-result" id="project-comparison" aria-live="polite">Select two projects above.</div>
+        </section>
       `;
     },
 
@@ -125,13 +140,14 @@ const Portfolio = (() => {
       const groups = Object.entries(PORTFOLIO_DATA.skills).map(([category, items]) => `
         <div class="info-card">
           <h3>${escapeHtml(category)}</h3>
-          <div class="tag-row">${items.map((s) => `<span class="tag">${escapeHtml(s)}</span>`).join("")}</div>
+          <div class="tag-row skill-map">${items.map((s) => `<button type="button" class="tag skill-map-button" data-skill="${escapeHtml(s)}" aria-pressed="false">${escapeHtml(s)}</button>`).join("")}</div>
         </div>
       `).join("");
       return `
         <h2>${sectionIcon("book")} Skills</h2>
-        <p class="subtitle">The tools and languages on my shelf.</p>
+        <p class="subtitle">Choose a technology in the skill constellation to see where it appears and what it connects to.</p>
         <div class="card-grid">${groups}</div>
+        <section class="skill-detail info-card" id="skill-detail" aria-live="polite">Select a skill to explore its project connections.</section>
       `;
     },
 
@@ -244,6 +260,67 @@ const Portfolio = (() => {
         </div>
       `;
     },
+
+    guestbook: () => `
+      <h2>${sectionIcon("pencil")} Guestbook</h2>
+      <p class="subtitle">Leave a little note for Rosemay.</p>
+      <form class="guestbook-form">
+        <label>Pick a prompt
+          <select name="prompt">
+            <option>What did you enjoy exploring?</option>
+            <option>What are you building lately?</option>
+            <option>Leave a cozy hello</option>
+          </select>
+        </label>
+        <label>Your message
+          <textarea name="message" rows="4" maxlength="240" placeholder="Write up to 240 characters…"></textarea>
+        </label>
+        <button type="submit" class="feature-action" disabled>Save message</button>
+      </form>
+      <p class="guestbook-notice" role="status">Guestbook preview: messages are not collected or stored. Choose a storage provider to enable posting.</p>
+    `,
+
+    "day-in-life": () => {
+      const step = 0;
+      const item = PORTFOLIO_DATA.dayInLife[step];
+      return `
+        <h2>${sectionIcon("clock")} A Day in My Life</h2>
+        <p class="subtitle">A playful sample of a day around the room.</p>
+        <div class="daylife-card" data-step="${step}">
+          <span class="daylife-time">${escapeHtml(item.time)}</span>
+          <h3 class="daylife-title">${escapeHtml(item.title)}</h3>
+          <p class="daylife-text">${escapeHtml(item.text)}</p>
+          <button type="button" class="feature-action daylife-object" data-object="${escapeHtml(item.object)}">Explore this room spot</button>
+          <div class="daylife-controls">
+            <button type="button" class="feature-action" data-daylife-step="-1" disabled>Previous</button>
+            <span class="daylife-count">1 of ${PORTFOLIO_DATA.dayInLife.length}</span>
+            <button type="button" class="feature-action" data-daylife-step="1">Next</button>
+          </div>
+        </div>
+      `;
+    },
+
+    "how-made": () => `
+      <h2>${sectionIcon("box")} How This Room Was Made</h2>
+      <p class="subtitle">A peek behind the little 3D portfolio.</p>
+      <div class="card-grid">${PORTFOLIO_DATA.howItsMade.map((item) => `
+        <div class="info-card"><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.text)}</p></div>
+      `).join("")}</div>
+    `,
+
+    postcard: () => `
+      <h2>${sectionIcon("image")} Portfolio Postcard</h2>
+      <p class="subtitle">Make a small souvenir from the room and a favorite detail.</p>
+      <label>Postcard caption
+        <select id="postcard-caption">
+          <option value="room">Rosemay's Room</option>
+          ${PORTFOLIO_DATA.projects.map((project, i) => `<option value="project-${i}">${escapeHtml(project.name)}</option>`).join("")}
+          ${PORTFOLIO_DATA.funFacts.map((fact, i) => `<option value="fact-${i}">${escapeHtml(fact)}</option>`).join("")}
+        </select>
+      </label>
+      <button type="button" class="feature-action" id="download-postcard">Download postcard</button>
+      <p id="postcard-status" role="status" aria-live="polite"></p>
+    `,
   };
 
   function renderClutter(type) {
@@ -256,12 +333,124 @@ const Portfolio = (() => {
   `;
 }
 
+function updateComparison() {
+  const result = content.querySelector("#project-comparison");
+  if (!result) return;
+  const selected = Array.from(content.querySelectorAll("[data-compare-project]:checked"))
+    .map((input) => PORTFOLIO_DATA.projects[Number(input.dataset.compareProject)])
+    .filter(Boolean);
+  if (selected.length !== 2) {
+    result.textContent = selected.length > 2 ? "Choose only two projects." : "Select two projects above.";
+    return;
+  }
+
+  const rows = [
+    ["Goal", (project) => project.description],
+    ["Tools", (project) => project.technologies.join(", ")],
+    ["Role", (project) => project.role || "Add role details in portfolio-data.js."],
+    ["What I explored", (project) => project.learning || "Add a project takeaway in portfolio-data.js."],
+  ];
+  result.innerHTML = `
+    <div class="comparison-table-wrap"><table class="comparison-table">
+      <thead><tr><th scope="col">Compare</th>${selected.map((project) => `<th scope="col">${escapeHtml(project.name)}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(([label, value]) => `<tr><th scope="row">${label}</th>${selected.map((project) => `<td>${escapeHtml(value(project))}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table></div>
+  `;
+}
+
+function onContentChange(event) {
+  if (event.target.matches("[data-compare-project]")) updateComparison();
+}
+
+function onContentClick(event) {
+  const milestoneButton = event.target.closest(".milestone-button");
+  if (milestoneButton) {
+    const project = PORTFOLIO_DATA.projects[Number(milestoneButton.dataset.project)];
+    const milestone = project && project.milestones && project.milestones[Number(milestoneButton.dataset.milestone)];
+    if (!milestone) return;
+    content.querySelectorAll(`.milestone-button[data-project="${milestoneButton.dataset.project}"]`)
+      .forEach((button) => button.setAttribute("aria-pressed", String(button === milestoneButton)));
+    const detail = content.querySelector(`#milestone-detail-${milestoneButton.dataset.project}`);
+    detail.textContent = `${milestone.date} — ${milestone.description}`;
+    return;
+  }
+
+  const skillButton = event.target.closest(".skill-map-button");
+  if (skillButton) {
+    const skill = skillButton.dataset.skill;
+    const related = PORTFOLIO_DATA.projects.filter((project) => project.technologies.includes(skill));
+    content.querySelectorAll(".skill-map-button").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button === skillButton));
+    });
+    const detail = content.querySelector("#skill-detail");
+    const note = PORTFOLIO_DATA.skillNotes[skill] || "Add a reflection for this skill in portfolio-data.js.";
+    detail.innerHTML = `<h3>${escapeHtml(skill)}</h3><p>${escapeHtml(note)}</p>${
+      related.length
+        ? related.map((project) => `<article class="skill-project"><strong>${escapeHtml(project.name)}</strong><p>${escapeHtml(project.learning || project.description)}</p></article>`).join("")
+        : `<p>No linked projects yet. Add this technology to a project's technologies in portfolio-data.js.</p>`
+    }`;
+    return;
+  }
+
+  const daylifeButton = event.target.closest("[data-daylife-step]");
+  if (daylifeButton) {
+    const card = content.querySelector(".daylife-card");
+    const next = Number(card.dataset.step) + Number(daylifeButton.dataset.daylifeStep);
+    const item = PORTFOLIO_DATA.dayInLife[next];
+    if (!item) return;
+    card.dataset.step = String(next);
+    card.querySelector(".daylife-time").textContent = item.time;
+    card.querySelector(".daylife-title").textContent = item.title;
+    card.querySelector(".daylife-text").textContent = item.text;
+    card.querySelector(".daylife-object").dataset.object = item.object;
+    card.querySelector(".daylife-controls button[data-daylife-step='-1']").disabled = next === 0;
+    card.querySelector(".daylife-controls button[data-daylife-step='1']").disabled = next === PORTFOLIO_DATA.dayInLife.length - 1;
+    card.querySelector(".daylife-count").textContent = `${next + 1} of ${PORTFOLIO_DATA.dayInLife.length}`;
+    return;
+  }
+
+  const objectButton = event.target.closest(".daylife-object");
+  if (objectButton) {
+    open(objectButton.dataset.object);
+    return;
+  }
+
+  const postcardProjectButton = event.target.closest("[data-postcard-project]");
+  if (postcardProjectButton) {
+    open("postcard");
+    const select = content.querySelector("#postcard-caption");
+    if (select) select.value = `project-${postcardProjectButton.dataset.postcardProject}`;
+    return;
+  }
+
+  if (event.target.closest("#download-postcard")) {
+    const select = content.querySelector("#postcard-caption");
+    const status = content.querySelector("#postcard-status");
+    if (window.RoomFeatures) {
+      window.RoomFeatures.downloadPostcard(select.value, status);
+    } else {
+      status.textContent = "Postcard tools are still loading.";
+    }
+  }
+}
+
+content.addEventListener("click", onContentClick);
+content.addEventListener("change", onContentChange);
+
   function open(type) {
   const renderer = renderers[type] || (() => renderClutter(type));
   const html = renderer();
   if (!html) return;
   lastFocusedEl = document.activeElement;
   content.innerHTML = html;
+  const guestbookForm = content.querySelector(".guestbook-form");
+  if (guestbookForm) {
+    guestbookForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      content.querySelector(".guestbook-notice").textContent =
+        "Guestbook preview only: nothing was sent or saved. Choose a storage provider to enable posting.";
+    });
+  }
   content.querySelectorAll(".project-media-toggle").forEach((button) => {
     button.addEventListener("click", () => {
       const panel = document.getElementById(button.getAttribute("aria-controls"));

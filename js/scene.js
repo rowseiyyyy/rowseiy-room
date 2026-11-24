@@ -13,6 +13,11 @@ const RoomScene = (() => {
 
   const isMobile = window.innerWidth < 700;
   const isLowPower = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+  const shadowsEnabled = !isMobile;
+
+  function pixelRatio() {
+    return Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 3);
+  }
 
   // three.js r155+ stopped scaling light intensity by PI and uses real candela for point/spot lights.
   // That is why a plain "intensity: 1" room looks black on modern versions. These two factors fix it.
@@ -22,10 +27,10 @@ const RoomScene = (() => {
 
   // Practical lights: position, colour, day intensity (d), night intensity (n)
   const PT = {
-    lamp:       { pos: [1.5, 1.6, -2.5],  c: 0xffc98a, d: 0,    n: 2.4 }, // desk lamp
-    bedLamp:    { pos: [-3.1, 1.0, 0.5],  c: 0xffcf9a, d: 0,    n: 1.6 },
-    floorLamp:  { pos: [3.0, 1.9, 0.0],   c: 0xffd2a0, d: 0,    n: 1.8 },
-    strings:    { pos: [0, 3.9, -2.3],    c: 0xffdfb0, d: 0.15, n: 0.8 }, // fairy lights
+    lamp:       { pos: [1.5, 1.6, -2.5],  c: 0xffc98a, d: 0.12, n: 2.4 }, // desk lamp
+    bedLamp:    { pos: [-3.1, 1.0, 0.5],  c: 0xffcf9a, d: 0.08, n: 1.6 },
+    floorLamp:  { pos: [3.0, 1.9, 0.0],   c: 0xffd2a0, d: 0.1,  n: 1.8 },
+    strings:    { pos: [0, 3.9, -2.3],    c: 0xffdfb0, d: 0.24, n: 0.9 }, // fairy lights
     laptopGlow: { pos: [-0.5, 1.3, -2.0], c: 0xbcd8e8, d: 0.1,  n: 0.5 },
   };
 
@@ -34,7 +39,7 @@ const RoomScene = (() => {
     const env = new THREE.Scene();
     const shell = new THREE.Mesh(
       new THREE.BoxGeometry(20, 10, 20),
-      new THREE.MeshBasicMaterial({ color: 0xcbb59a, side: THREE.BackSide })
+      new THREE.MeshBasicMaterial({ color: 0xd3b89b, side: THREE.BackSide })
     );
     shell.position.y = 4;
     env.add(shell);
@@ -53,8 +58,8 @@ const RoomScene = (() => {
 
   function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xeadfce);
-    scene.fog = new THREE.Fog(0xeadfce, 14, 30);
+    scene.background = new THREE.Color(0xf0e3d3);
+    scene.fog = new THREE.Fog(0xf0e3d3, 14, 30);
 
     camera = new THREE.PerspectiveCamera(isMobile ? 55 : 45, window.innerWidth / window.innerHeight, 0.1, 100);
     camera.position.set(5, 3.4, 6.3);
@@ -68,8 +73,8 @@ const RoomScene = (() => {
       powerPreference: "high-performance"
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLowPower ? 1.5 : 2.5));
-    renderer.shadowMap.enabled = !isLowPower;
+    renderer.setPixelRatio(pixelRatio());
+    renderer.shadowMap.enabled = shadowsEnabled;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.autoUpdate = true;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -94,8 +99,9 @@ const RoomScene = (() => {
     lights.sun = new THREE.DirectionalLight(0xffe0b8, 1);
     lights.sun.position.set(6, 9, 7);
     lights.sun.target.position.set(0, 1, 0);
-    lights.sun.castShadow = !isLowPower;
-    lights.sun.shadow.mapSize.set(isLowPower ? 2048 : 4096, isLowPower ? 2048 : 4096);
+    const sunShadowSize = isLowPower ? 2048 : 4096;
+    lights.sun.castShadow = shadowsEnabled;
+    lights.sun.shadow.mapSize.set(sunShadowSize, sunShadowSize);
     Object.assign(lights.sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 0.5, far: 28 });
     lights.sun.shadow.bias = -0.0008;
     lights.sun.shadow.normalBias = 0.08;
@@ -105,8 +111,9 @@ const RoomScene = (() => {
     lights.window = new THREE.SpotLight(0xfff0d0, 1, 0, 0.55, 0.9, 2);
     lights.window.position.set(1.7, 3.2, -5.2);
     lights.window.target.position.set(0.9, 0.3, -0.2);
-    lights.window.castShadow = !isLowPower;
-    lights.window.shadow.mapSize.set(isLowPower ? 1024 : 2048, isLowPower ? 1024 : 2048);
+    const windowShadowSize = isLowPower ? 1024 : 2048;
+    lights.window.castShadow = shadowsEnabled;
+    lights.window.shadow.mapSize.set(windowShadowSize, windowShadowSize);
     lights.window.shadow.camera.near = 1;
     lights.window.shadow.camera.far = 14;
     lights.window.shadow.bias = -0.001;
@@ -129,18 +136,18 @@ const RoomScene = (() => {
     mood = m;
     const L = (a, b) => a + (b - a) * m;
 
-    mixC(scene.background, 0xeadfce, 0x151326, m);
+    mixC(scene.background, 0xf0e3d3, 0x261c1a, m);
     scene.fog.color.copy(scene.background);
 
-    mixC(lights.hemi.color, 0xfff1de, 0x3a4280, m);
-    mixC(lights.hemi.groundColor, 0x8a6a4c, 0x241a22, m);
-    lights.hemi.intensity = L(0.42, 0.22) * K_DIR;
+    mixC(lights.hemi.color, 0xfff1de, 0x86616a, m);
+    mixC(lights.hemi.groundColor, 0x987555, 0x49332f, m);
+    lights.hemi.intensity = L(0.48, 0.26) * K_DIR;
 
-    mixC(lights.sun.color, 0xffe0b8, 0x8aa4ff, m); // becomes cool moonlight
-    lights.sun.intensity = L(0.8, 0.08) * K_DIR;
+    mixC(lights.sun.color, 0xffdfbd, 0xc7a3a0, m); // soft warm daylight fades to muted dusk
+    lights.sun.intensity = L(0.72, 0.08) * K_DIR;
 
-    mixC(lights.window.color, 0xfff0d0, 0xa9bcff, m);
-    lights.window.intensity = L(5, 1.4) * K_PT;
+    mixC(lights.window.color, 0xffefd8, 0xe5ac91, m);
+    lights.window.intensity = L(3.8, 1.2) * K_PT;
 
     Object.entries(PT).forEach(([name, p]) => {
       lights[name].intensity = L(p.d, p.n) * K_PT;
@@ -157,7 +164,7 @@ const RoomScene = (() => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, isLowPower ? 1.5 : 2.5));
+    renderer.setPixelRatio(pixelRatio());
   }
 
   return {

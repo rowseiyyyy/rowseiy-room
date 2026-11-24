@@ -38,16 +38,22 @@
   const daynightBtn = document.getElementById("daynight-toggle");
   const savedMode = localStorage.getItem("rosemay-room-mode");
   let isNight = savedMode === "night";
-  applyNightMode(isNight, false);
+  applyNightMode(isNight);
 
   daynightBtn.addEventListener("click", () => {
     isNight = !isNight;
-    applyNightMode(isNight, true);
+    applyNightMode(isNight);
     localStorage.setItem("rosemay-room-mode", isNight ? "night" : "day");
+    if (window.RoomFeatures) RoomFeatures.setManualDayNight(isNight);
   });
 
-  function applyNightMode(night, animate) {
+  function applyNightMode(night) {
     Animations.setNightMode(night);
+    syncNightControls(night);
+  }
+
+  function syncNightControls(night) {
+    isNight = night;
     document.documentElement.dataset.theme = night ? "night" : "day";
     setIcon(daynightBtn, night ? icons.sun : icons.moon);
     daynightBtn.setAttribute("aria-label", night ? "Switch to day mode" : "Switch to night mode");
@@ -59,12 +65,24 @@
   setIcon(musicBtn, icons.mute);
   let musicOn = false;
   musicBtn.addEventListener("click", () => {
-    if (!music.src) return; // no track configured - button still gives feedback but does nothing
-    musicOn = !musicOn;
-    if (musicOn) music.play().catch(() => {});
-    else music.pause();
+    if (!music.src) {
+      document.getElementById("feature-status").textContent = "No music track is configured yet. Add a royalty-free track to enable music.";
+      return;
+    }
+    const shouldPlay = !musicOn;
+    syncMusicControls(shouldPlay);
+    RoomFeatures.setAmbience(shouldPlay ? "music" : "quiet");
+  });
+
+  function syncMusicControls(on) {
+    musicOn = on;
     setIcon(musicBtn, musicOn ? icons.volume : icons.mute);
     musicBtn.setAttribute("aria-pressed", String(musicOn));
+  }
+
+  RoomFeatures.init({
+    syncNightMode: syncNightControls,
+    syncMusicMode: syncMusicControls,
   });
 
   // ---------- Welcome toast ----------

@@ -11,6 +11,11 @@
  */
 
 const Realism = (() => {
+  let maxAnisotropy = 16;
+  let bevelSegments = 12;
+  let textureScale = 1;
+  const textureSize = (size) => Math.max(128, Math.round(size * textureScale));
+
   const srgb = (t) => {
     if ("colorSpace" in t) t.colorSpace = THREE.SRGBColorSpace;
     else t.encoding = THREE.sRGBEncoding;
@@ -23,13 +28,14 @@ const Realism = (() => {
     draw(c.getContext("2d"), w, h);
     const t = new THREE.CanvasTexture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
-    t.anisotropy = 16;
+    t.anisotropy = maxAnisotropy;
     return color ? srgb(t) : t;
   }
 
   // ---------- textures ----------
   function woodFloor() {
-    return canvasTex(1024, 1024, (ctx, w, h) => {
+    const size = textureSize(2048);
+    return canvasTex(size, size, (ctx, w, h) => {
       ctx.fillStyle = "#1e140d"; // dark gaps between planks
       ctx.fillRect(0, 0, w, h);
       const planks = 8, pw = w / planks;
@@ -56,23 +62,18 @@ const Realism = (() => {
   }
 
   function plaster(hex) {
-    return canvasTex(512, 512, (ctx, w, h) => {
+    const size = textureSize(1024);
+    return canvasTex(size, size, (ctx, w, h) => {
       ctx.fillStyle = hex;
       ctx.fillRect(0, 0, w, h);
-      for (let i = 0; i < 90; i++) { // soft blotches
-        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 40 + Math.random() * 80);
-        const light = Math.random() > 0.5;
-        g.addColorStop(0, light ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)");
-        g.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.save();
-        ctx.translate(Math.random() * w, Math.random() * h);
-        ctx.fillStyle = g;
-        ctx.fillRect(-120, -120, 240, 240);
-        ctx.restore();
+      for (let i = 0; i < 1800; i++) {
+        const shade = Math.random() > 0.5 ? 255 : 40;
+        ctx.fillStyle = `rgba(${shade},${shade},${shade},${0.008 + Math.random() * 0.018})`;
+        ctx.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2);
       }
       const img = ctx.getImageData(0, 0, w, h); // fine grain
       for (let i = 0; i < img.data.length; i += 4) {
-        const n = (Math.random() - 0.5) * 14;
+        const n = (Math.random() - 0.5) * 7;
         img.data[i] += n; img.data[i + 1] += n; img.data[i + 2] += n;
       }
       ctx.putImageData(img, 0, 0);
@@ -80,7 +81,8 @@ const Realism = (() => {
   }
 
   function roughnessNoise() {
-    return canvasTex(256, 256, (ctx, w, h) => {
+    const size = textureSize(512);
+    return canvasTex(size, size, (ctx, w, h) => {
       const img = ctx.createImageData(w, h);
       for (let i = 0; i < img.data.length; i += 4) {
         const v = 175 + Math.random() * 80;
@@ -89,6 +91,74 @@ const Realism = (() => {
       }
       ctx.putImageData(img, 0, 0);
     }, false);
+  }
+
+  function fabricWeave(color = true) {
+    const size = textureSize(1024);
+    return canvasTex(size, size, (ctx, w, h) => {
+      ctx.fillStyle = color ? "#ede9e0" : "#808080";
+      ctx.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 7) {
+        ctx.fillStyle = color ? "rgba(255,255,255,0.12)" : "rgba(245,245,245,0.36)";
+        ctx.fillRect(0, y, w, 2);
+      }
+      for (let x = 0; x < w; x += 7) {
+        ctx.fillStyle = color ? "rgba(75,68,58,0.055)" : "rgba(35,35,35,0.26)";
+        ctx.fillRect(x, 0, 2, h);
+      }
+    }, color);
+  }
+
+  function furGrain(color = true) {
+    const size = textureSize(1024);
+    return canvasTex(size, size, (ctx, w, h) => {
+      ctx.fillStyle = color ? "#eee9e0" : "#808080";
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 2500; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        const light = Math.random() > 0.5;
+        const shade = color
+          ? `rgba(${light ? "255,252,244" : "66,58,49"},${0.025 + Math.random() * 0.055})`
+          : `rgba(${light ? "255,255,255" : "35,35,35"},0.18)`;
+        ctx.strokeStyle = shade;
+        ctx.lineWidth = color ? 0.6 + Math.random() * 1.1 : 1;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + Math.random() * 3 - 1.5, y + 3, x + Math.random() * 2 - 1, y + 7 + Math.random() * 5);
+        ctx.stroke();
+      }
+    }, color);
+  }
+
+  function woodGrain(color = true) {
+    const size = textureSize(1024);
+    return canvasTex(size, size, (ctx, w, h) => {
+      ctx.fillStyle = color ? "#e8e1d7" : "#808080";
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 180; i++) {
+        const y = Math.random() * h;
+        const shade = Math.random() > 0.5 ? 46 : 255;
+        const alpha = color ? 0.025 + Math.random() * 0.045 : 0.12 + Math.random() * 0.18;
+        ctx.strokeStyle = `rgba(${shade},${shade},${shade},${alpha})`;
+        ctx.lineWidth = 0.5 + Math.random() * (color ? 1.4 : 2);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.bezierCurveTo(w * 0.28, y - 5 + Math.random() * 10, w * 0.68, y - 5 + Math.random() * 10, w, y);
+        ctx.stroke();
+      }
+      for (let i = 0; i < 5; i++) {
+        const x = Math.random() * w;
+        const y = Math.random() * h;
+        ctx.strokeStyle = color ? "rgba(58,38,22,0.07)" : "rgba(25,25,25,0.3)";
+        ctx.lineWidth = 1;
+        for (let ring = 0; ring < 3; ring++) {
+          ctx.beginPath();
+          ctx.ellipse(x, y, 4 + ring * 3, 2 + ring * 1.4, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }, color);
   }
 
   function blobTex() {
@@ -115,9 +185,9 @@ const Realism = (() => {
   const cache = {};
   function roundedBox(w, h, d, r = 0.016) {
     r = Math.min(r, Math.min(w, h, d) * 0.45);
-    const key = [w, h, d, r].map((n) => n.toFixed(4)).join();
+    const key = [w, h, d, r, bevelSegments].map((n) => n.toFixed(4)).join();
     if (cache[key]) return cache[key];
-    const g = new THREE.BoxGeometry(w, h, d, 8, 8, 8);
+    const g = new THREE.BoxGeometry(w, h, d, bevelSegments, bevelSegments, bevelSegments);
     const pos = g.attributes.position, nor = g.attributes.normal;
     const hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r;
     const v = new THREE.Vector3(), c = new THREE.Vector3(), n = new THREE.Vector3();
@@ -138,14 +208,44 @@ const Realism = (() => {
 
   // ---------- main pass ----------
   function apply(root, S) {
+    maxAnisotropy = Math.min(16, S.renderer.capabilities.getMaxAnisotropy());
+    bevelSegments = S.isMobile ? 8 : 12;
+    textureScale = S.isMobile ? 0.5 : 1;
     const rough = roughnessNoise();
     const floorTex = woodFloor();
+    const woodTex = woodGrain();
+    const woodBump = woodGrain(false);
+    const fabricTex = fabricWeave();
+    const fabricBump = fabricWeave(false);
+    const furTex = furGrain();
+    const furBump = furGrain(false);
     const backTex = plaster("#efe6d8"); backTex.repeat.set(2.5, 1.6);
-    const sideTex = plaster("#4b433c"); sideTex.repeat.set(2, 1.6); // lighter than the old near-black
+    const sideTex = plaster("#665144"); sideTex.repeat.set(2, 1.6);
 
     root.traverse((o) => {
       if (!o.isMesh || !o.material || o.material.isMeshBasicMaterial || o.material.isShadowMaterial) return;
       const g = o.geometry, m = o.material, p = g.parameters || {};
+
+      const surface = m.userData && m.userData.surface;
+      if (surface === "fabric" || surface === "woven" || surface === "fur") {
+        m.map = surface === "fur" ? furTex : fabricTex;
+        m.bumpMap = surface === "fur" ? furBump : fabricBump;
+        m.bumpScale = surface === "fur" ? 0.009 : 0.006;
+        m.roughness = 0.96;
+        m.needsUpdate = true;
+      }
+
+      if (
+        m.isMeshStandardMaterial &&
+        !m.map &&
+        [0x8a5e3b, 0x3f2a1b, 0x6f4a32].includes(m.color.getHex()) &&
+        (g.type === "BoxGeometry" || g.type === "CylinderGeometry")
+      ) {
+        m.map = woodTex;
+        m.bumpMap = woodBump;
+        m.bumpScale = 0.008;
+        m.needsUpdate = true;
+      }
 
       if (g.type === "PlaneGeometry") {
         if (p.width === 7 && p.height === 5.8) {            // floor
