@@ -8,6 +8,8 @@
 const Interactions = (() => {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
+  const projectedObjectPosition = new THREE.Vector3();
+  const HOVER_PROXIMITY_RADIUS = 110;
   let camera, scene, canvas, interactiveObjects;
   let hovered = null;
   let onObjectActivated = () => {};
@@ -114,10 +116,18 @@ const Interactions = (() => {
   }
 
   function setupObjectNav() {
-    document.querySelectorAll(".object-nav button").forEach((btn) => {
+    document.querySelectorAll(".object-nav button[data-target]").forEach((btn) => {
       btn.addEventListener("click", () => {
         onObjectActivated(btn.dataset.target);
       });
+    });
+
+    const nav = document.querySelector(".object-nav");
+    const toggle = document.getElementById("object-nav-toggle");
+    toggle.addEventListener("click", () => {
+      const collapsed = nav.classList.toggle("collapsed");
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.textContent = collapsed ? "Show tabs" : "Hide tabs";
     });
   }
 
@@ -194,27 +204,55 @@ const Interactions = (() => {
     updatePointer(event);
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects(interactiveObjects, true);
+    const hitGroup = intersects.length > 0 ? findTargetGroup(intersects[0].object) : null;
+    const nearby = hitGroup
+      ? { group: hitGroup, intensity: 1 }
+      : findNearbyObject(event.clientX, event.clientY);
     const hint = document.getElementById("hover-hint");
 
-    if (intersects.length > 0) {
-      const group = findTargetGroup(intersects[0].object);
-      if (group && group !== hovered) {
-        clearHover();
-        hovered = group;
-        applyHoverEffect(hovered, true);
-        canvas.classList.add("hoverable");
-      }
-      if (group) {
-        hint.textContent = hintLabel(group.userData.type);
-        hint.style.left = event.clientX + "px";
-        hint.style.top = event.clientY + "px";
-        hint.classList.add("show");
-      }
-    } else {
+    if (nearby.group !== hovered) {
       clearHover();
+      hovered = nearby.group;
+    }
+    if (hovered) {
+      applyHoverEffect(hovered, nearby.intensity);
+    }
+
+    if (hitGroup) {
+      canvas.classList.add("hoverable");
+      hint.textContent = hintLabel(hitGroup.userData.type);
+      hint.style.left = event.clientX + "px";
+      hint.style.top = event.clientY + "px";
+      hint.classList.add("show");
+    } else {
       canvas.classList.remove("hoverable");
       hint.classList.remove("show");
     }
+  }
+
+  function findNearbyObject(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    let nearestGroup = null;
+    let nearestDistance = HOVER_PROXIMITY_RADIUS;
+
+    interactiveObjects.forEach((group) => {
+      group.getWorldPosition(projectedObjectPosition).project(camera);
+      if (projectedObjectPosition.z < -1 || projectedObjectPosition.z > 1) return;
+
+      const screenX = rect.left + (projectedObjectPosition.x + 1) * rect.width / 2;
+      const screenY = rect.top + (1 - projectedObjectPosition.y) * rect.height / 2;
+      const distance = Math.hypot(clientX - screenX, clientY - screenY);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestGroup = group;
+      }
+    });
+
+    const proximity = 1 - nearestDistance / HOVER_PROXIMITY_RADIUS;
+    return {
+      group: nearestGroup,
+      intensity: proximity * proximity * (3 - 2 * proximity),
+    };
   }
 
   function clearHover() {
@@ -222,11 +260,10 @@ const Interactions = (() => {
     hovered = null;
   }
 
- function applyHoverEffect(group, isHover) {
-  group.userData.hoverTargetScale = isHover ? 1.08 : 1;
-  group.userData.hoverTilt = isHover ? 0.06 : 0;
-  if (group.userData.outline) group.userData.outline.visible = isHover;
-}
+  function applyHoverEffect(group, intensity) {
+    group.userData.hoverTargetScale = 1 + 0.06 * intensity;
+    group.userData.hoverTilt = 0.04 * intensity;
+  }
 
   function hintLabel(type) {
     const labels = {
@@ -234,6 +271,7 @@ const Interactions = (() => {
       bookshelf: "View Skills",
       console: "View Hobbies",
       frame: "About Me",
+      wallPhoto: "View Photo",
       notes: "Education",
       cat: "Fun Facts",
       plants: "Currently Learning",
@@ -356,8 +394,9 @@ const Interactions = (() => {
     if (intersects.length > 0) {
       const group = findTargetGroup(intersects[0].object);
       if (group) {
+        document.getElementById("hover-hint").classList.remove("show");
         Animations.playInteraction(group.userData.type);
-        onObjectActivated(group.userData.type);
+        onObjectActivated(group.userData.type, group.userData);
       }
     }
   }
@@ -367,10 +406,10 @@ const Interactions = (() => {
     const position = object.getWorldPosition(new THREE.Vector3());
     let changed = false;
 
-    if (position.x < -3.35) { position.x = -3.35; changed = true; }
-    if (position.x > 3.35) { position.x = 3.35; changed = true; }
-    if (position.z < -2.85) { position.z = -2.85; changed = true; }
-    if (position.z > 2.65) { position.z = 2.65; changed = true; }
+    if (position.x < -3.0) { position.x = -3.0; changed = true; }
+    if (position.x > 3.0) { position.x = 3.0; changed = true; }
+    if (position.z < -2.55) { position.z = -2.55; changed = true; }
+    if (position.z > 2.4) { position.z = 2.4; changed = true; }
     if (position.y < 0.05) { position.y = 0.05; changed = true; }
     if (position.y > 4.2) { position.y = 4.2; changed = true; }
 

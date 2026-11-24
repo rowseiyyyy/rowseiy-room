@@ -299,22 +299,25 @@ const Realism = (() => {
   }
 
   function addDioramaBase(root) {
-    const slab = (w, h, d, x, y, z, color) => {
+    const slab = (w, h, d, x, y, z, color, castsShadow = true) => {
       const m = new THREE.Mesh(roundedBox(w, h, d, 0.02), new THREE.MeshStandardMaterial({ color, roughness: 0.85 }));
       m.userData.structural = true;
       m.position.set(x, y, z);
-      m.castShadow = m.receiveShadow = true;
+      m.castShadow = castsShadow;
+      m.receiveShadow = true;
       root.add(m);
     };
-    slab(7.18, 4.4, 0.18, -0.09, 2.2, -3.13, 0xe9dfcf);  // back wall thickness
-    slab(0.18, 4.4, 5.98, -3.63, 2.2, -0.19, 0x3a322c);  // side wall thickness
-    slab(7.18, 0.38, 5.98, -0.09, -0.21, -0.19, 0x3a2a1d); // floor slab
+    // Keep the cutaway shell from casting a room-sized silhouette outside.
+    slab(7.18, 4.4, 0.18, -0.09, 2.2, -3.13, 0xe9dfcf, false);  // back wall thickness
+    slab(0.18, 4.4, 5.98, -3.63, 2.2, -0.19, 0x3a322c, false);  // side wall thickness
+    slab(7.18, 0.38, 5.98, -0.09, -0.21, -0.19, 0x3a2a1d, false); // floor slab
 
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.22 }));
     ground.userData.structural = true;
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.41;
-    ground.receiveShadow = true;
+    // Props cast onto the room floor instead of creating large exterior shadows.
+    ground.receiveShadow = false;
     root.add(ground);
   }
 

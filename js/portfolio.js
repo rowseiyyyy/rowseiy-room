@@ -88,18 +88,6 @@ const Portfolio = (() => {
     return `<svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true">${paths[name]}</svg>`;
   }
 
-  const clutterIcons = {
-    guitar: "music", floorlamp: "lamp", basket: "box", boxes: "box",
-    bookstack1: "book", bookstack2: "book", shoes: "activity", backpack: "box",
-    skateboard: "activity", bin: "trash", pouf: "sofa", cushions: "sofa",
-    recordplayer: "music", records: "disc", pencilcup: "pencil", deskbooks: "book",
-    deskplant: "sprout", candle: "lamp", headphones: "music", notebook: "book",
-    speaker: "music", coffee: "coffee", keyboard: "laptop", clock: "clock",
-    hooks: "hanger", nightstand: "bed", bed: "bed", window: "window",
-    hangplant: "sprout", stringlights: "sparkles", gallery: "image",
-    wallshelf: "box", dogbowls: "bone",
-  };
-
   const renderers = {
     laptop: () => {
       const cards = PORTFOLIO_DATA.projects.map((p, index) => `
@@ -323,15 +311,17 @@ const Portfolio = (() => {
     `,
   };
 
-  function renderClutter(type) {
-  const c = PORTFOLIO_DATA.clutter && PORTFOLIO_DATA.clutter[type];
-  if (!c) return null;
-  return `
-    <h2>${sectionIcon(clutterIcons[type] || "sparkles")} ${escapeHtml(c.title)}</h2>
-    <p class="subtitle">${escapeHtml(c.subtitle)}</p>
-    <p>${escapeHtml(c.text)}</p>
-  `;
-}
+  function renderWallPhoto(photo = {}) {
+    if (!photo.photoSrc) return "";
+    const alt = photo.photoAlt || "Wall photo";
+    return `
+      <div class="wall-photo-viewer">
+        <div class="wall-photo-viewer__scale" style="--photo-frame-color: ${escapeHtml(photo.photoFrameColor || "#6b4c37")}">
+          <img src="${escapeHtml(photo.photoSrc)}" alt="${escapeHtml(alt)}">
+        </div>
+      </div>
+    `;
+  }
 
 function updateComparison() {
   const result = content.querySelector("#project-comparison");
@@ -437,9 +427,9 @@ function onContentClick(event) {
 content.addEventListener("click", onContentClick);
 content.addEventListener("change", onContentChange);
 
-  function open(type) {
-  const renderer = renderers[type] || (() => renderClutter(type));
-  const html = renderer();
+  function open(type, details) {
+  const renderer = renderers[type];
+  const html = type === "wallPhoto" ? renderWallPhoto(details) : renderer ? renderer() : null;
   if (!html) return;
   lastFocusedEl = document.activeElement;
   content.innerHTML = html;
@@ -461,6 +451,7 @@ content.addEventListener("change", onContentChange);
     });
   });
   overlay.classList.add("open");
+  overlay.classList.toggle("photo-open", type === "wallPhoto");
   overlay.setAttribute("aria-hidden", "false");
   objectNav.hidden = true;
   content.querySelectorAll(".info-card, .fact-item, .timeline-item").forEach((item, index) => {
@@ -473,6 +464,7 @@ content.addEventListener("change", onContentChange);
 
 function close() {
   overlay.classList.remove("open");
+  overlay.classList.remove("photo-open");
   overlay.setAttribute("aria-hidden", "true");
   objectNav.hidden = false;
   document.removeEventListener("keydown", onKeydown);

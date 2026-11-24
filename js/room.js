@@ -34,7 +34,7 @@ const Room = (() => {
 
   // Add a local or hosted image path to replace any wall-photo placeholder.
   // Example: ["images/memory-one.jpg", "images/memory-two.jpg", "", "", "", ""]
-  const WALL_PHOTO_SOURCES = ["images/img1.PNG", "images/img2.jpg", "images/img3.jpg", "images/img4.jpg", "", ""];
+  const WALL_PHOTO_SOURCES = ["images/img1.PNG", "images/img2.jpg", "images/img3.jpg", "images/img4.jpg", "images/img5.jpg"];
 
   function makeMat(color, opts = {}) {
     const { surface, ...materialOptions } = opts;
@@ -122,12 +122,19 @@ const Room = (() => {
   }
 
   function buildWallPhoto(parent, width, height, index, frameColor = COLORS.woodDark) {
-    box(parent, width + 0.12, height + 0.12, 0.055, frameColor, 0, 0, 0);
+    parent.userData.type = "wallPhoto";
+    parent.userData.photoIndex = index;
+    parent.userData.photoAlt = `Wall photo ${index + 1}`;
+    parent.userData.photoFrameColor = `#${frameColor.toString(16).padStart(6, "0")}`;
+    const frame = box(parent, width + 0.12, height + 0.12, 0.055, frameColor, 0, 0, 0);
+    frame.userData.structural = true;
     const photo = new THREE.Mesh(
       new THREE.PlaneGeometry(width, height),
       makeWallPhotoPlaceholder(index)
     );
     photo.position.z = 0.031;
+    photo.userData.structural = true;
+    parent.userData.photoSrc = photo.material.map.image.toDataURL("image/png");
     parent.add(photo);
 
     const source = WALL_PHOTO_SOURCES[index];
@@ -138,15 +145,16 @@ const Room = (() => {
           texture.colorSpace = THREE.SRGBColorSpace;
           texture.anisotropy = 4;
           photo.material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false });
+          parent.userData.photoSrc = source;
         },
-        undefined,
-        () => {}
+        undefined
       );
     }
   }
 
   function build(scene) {
     root = new THREE.Group();
+    root.scale.setScalar(0.9);
     scene.add(root);
 
     buildFloorAndWalls();
@@ -486,7 +494,6 @@ const Room = (() => {
 
   function buildPictureFrame() {
     const group = new THREE.Group();
-    group.userData.type = "frame";
     group.position.set(-0.5, 3.05, -2.88);
     buildWallPhoto(group, 1.35, 1.65, 0, COLORS.black);
     root.add(group);
@@ -947,6 +954,7 @@ const Room = (() => {
       g.rotation.y = ry;
       buildWallPhoto(g, w, hgt, photoIndex, photoIndex % 2 ? COLORS.black : COLORS.woodDark);
       root.add(g);
+      interactiveObjects.push(g);
     });
 
     // coat hooks with a hoodie + tote on the back wall near the bookshelf
@@ -1252,16 +1260,6 @@ function buildClutterHotspots() {
     const geo = new THREE.BoxGeometry(w, h, d);
     // invisible but still clickable
     group.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ visible: false })));
-
-    // glowing outline shown on hover
-    const outline = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geo),
-      new THREE.LineBasicMaterial({ color: 0xffd9a0 })
-    );
-    outline.raycast = () => {}; // lines must not catch clicks
-    outline.visible = false;
-    group.add(outline);
-    group.userData.outline = outline;
 
     root.add(group);
     interactiveObjects.push(group);

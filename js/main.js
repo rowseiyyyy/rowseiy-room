@@ -24,7 +24,7 @@
     scene: RoomScene.scene,
     canvas: document.getElementById("scene-canvas"),
     interactiveObjects,
-    onActivate: (type) => Portfolio.open(type),
+    onActivate: (type, details) => Portfolio.open(type, details),
   });
 
   Animations.init({

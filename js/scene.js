@@ -62,7 +62,7 @@ const RoomScene = (() => {
     scene.fog = new THREE.Fog(0xf0e3d3, 14, 30);
 
     camera = new THREE.PerspectiveCamera(isMobile ? 55 : 45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(5, 3.4, 6.3);
+    camera.position.set(5.75, 3.82, 7.25);
     camera.lookAt(0, 1.2, 0);
 
     renderer = new THREE.WebGLRenderer({
@@ -107,7 +107,7 @@ const RoomScene = (() => {
     lights.sun.shadow.normalBias = 0.08;
     scene.add(lights.sun, lights.sun.target);
 
-    // Light coming through the window: casts the mullion cross and curtain shadows on the floor
+    // Window light adds the stronger, directional shadows on the room's objects.
     lights.window = new THREE.SpotLight(0xfff0d0, 1, 0, 0.55, 0.9, 2);
     lights.window.position.set(1.7, 3.2, -5.2);
     lights.window.target.position.set(0.9, 0.3, -0.2);
@@ -116,8 +116,8 @@ const RoomScene = (() => {
     lights.window.shadow.mapSize.set(windowShadowSize, windowShadowSize);
     lights.window.shadow.camera.near = 1;
     lights.window.shadow.camera.far = 14;
-    lights.window.shadow.bias = -0.001;
-    lights.window.shadow.normalBias = 0.06;
+    lights.window.shadow.bias = -0.0002;
+    lights.window.shadow.normalBias = 0.02;
     scene.add(lights.window, lights.window.target);
 
     // Practical lights (lamps, fairy lights, laptop)
