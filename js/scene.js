@@ -58,7 +58,7 @@ const RoomScene = (() => {
 
   function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0e3d3);
+    scene.background = null;
     scene.fog = new THREE.Fog(0xf0e3d3, 14, 30);
 
     camera = new THREE.PerspectiveCamera(isMobile ? 55 : 45, window.innerWidth / window.innerHeight, 0.1, 100);
@@ -68,7 +68,7 @@ const RoomScene = (() => {
     renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
-      alpha: false,
+      alpha: true,
       logarithmicDepthBuffer: true,
       powerPreference: "high-performance"
     });
@@ -136,8 +136,7 @@ const RoomScene = (() => {
     mood = m;
     const L = (a, b) => a + (b - a) * m;
 
-    mixC(scene.background, 0xf0e3d3, 0x261c1a, m);
-    scene.fog.color.copy(scene.background);
+    mixC(scene.fog.color, 0xf0e3d3, 0x261c1a, m);
 
     mixC(lights.hemi.color, 0xfff1de, 0x86616a, m);
     mixC(lights.hemi.groundColor, 0x987555, 0x49332f, m);
